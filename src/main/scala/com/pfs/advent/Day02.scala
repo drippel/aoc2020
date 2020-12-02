@@ -6,7 +6,7 @@ object Day02 {
 
   def main(args: Array[String]): Unit = 
     Console.println("2020 02 01")
-    val ps = input.split("\n").toList.map(_.trim).map(parse)
+    val ps = input.split("\n").toList.map(_.trim).map(parse2).flatten
     ps.foreach(Console.out.println(_))
     val validps = ps.filter(isValid(_))
     Console.out.println(validps.size)
@@ -24,23 +24,18 @@ object Day02 {
 
   case class Policy(min: Int, max: Int, c: Char, password: String)
 
-  def parse(src: String): Policy = 
-    val ps = src.split(":").toList.map(_.trim)
-
-    val policy = ps(0)
-    val password = ps(1)
-
-    val pol1 = policy.split(' ')
-    val pol2 = pol1(0)
-
-    val char = pol1(1)
-
-    val minmax = pol2.split('-')
-    val min = minmax(0).toInt
-    val max = minmax(1).toInt
-
-    Policy(min, max, char(0), password)
-
+  def parse2( src : String ) : Option[Policy] =
+    val pregex = """(\d+)-(\d+) ([a-zA-Z]): (.*)""".r
+    src match {
+      case pregex( min, max, c, pwd ) => {
+        Some( Policy( min.toInt, max.toInt, c(0), pwd ) )
+      }
+      case _ => {
+        None
+      }
+    }
+  end parse2
+  
   val input =
     """4-5 r: rrrjr
       9-10 x: pxcbpxxwkqjttx
