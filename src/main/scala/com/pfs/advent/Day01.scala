@@ -9,77 +9,75 @@ object Day01 {
 
   val log = LogManager.getLogger("aoc")
 
-  def main( args : Array[String] ) : Unit = {
+  def main(args: Array[String]): Unit =
     log.info("2020 01 A")
+
     val is = parse(input)
     val found = findPair(is)
     log.info(s"${found}")
-    if( found.isDefined ){
+    if (found.isDefined)
       log.info(s"${found.get._2 * found.get._3}")
-    }
+
 
     val iss = is.sorted
-    // log.info( iss )
     val start = new Date()
     val answer = part2(iss)
     val end = new Date()
-    log.info( "{}", (end.getTime - start.getTime) )
-    log.info( "answer:{}", ( answer.get._1 * answer.get._2 * answer.get._3 ) )
-    log.info( "answer:{}",  answer )
-
+    log.info("{}", (end.getTime - start.getTime))
+    log.info("answer:{}", (answer.get._1 * answer.get._2 * answer.get._3))
+    log.info("answer:{}", answer)
 
 
     val si = Instant.now()
     val res = permTest(iss)
     val se = Instant.now()
-    val dur = Duration.between(si,se)
-    log.info( "{}", dur.toMillis )
-    log.info( "answer:{}", res )
+    val dur = Duration.between(si, se)
+    log.info("{}", dur.toMillis)
+    log.info("answer:{}", res)
+
+  end main
 
 
-  }
-
-  def permTest( is : List[Int] ) = {
-
+  def permTest(is: List[Int]) =
     Console.out.println(is)
+
     val min = is(0) + is(1)
-    val opt = is.filter( (i:Int) => { ( i + min ) <= 2020 } )
+    val opt = is.filter((i: Int) => {
+      (i + min) <= 2020
+    })
 
     val ps = opt.combinations(3)
-    ps.find( _.sum == 2020 )
+    ps.find(_.sum == 2020)
 
-  }
+  end permTest
 
-  def parse( s : String ) = {
-    s.split("\n").toList.map( _.trim ).map( _.toInt )
-  }
 
-  def findPair( src : List[Int] ) = {
+  def parse(s: String) = s.split("\n").toList.map(_.trim).map(_.toInt)
 
-    def innerFind( is : List[Int], accum : Option[(Int,Int,Int)] ) : Option[(Int,Int,Int)] = {
+  def findPair(src: List[Int]) = {
 
-      if( accum.isDefined ) {
+    def innerFind(is: List[Int], accum: Option[(Int, Int, Int)]): Option[(Int, Int, Int)] =
+
+      if (accum.isDefined)
         accum
-      }
-      else {
-        if( is.length < 2 ) {
-          None
-        }
-        else {
+      else if (is.length < 2) then
+        None
+      else
+        val (h, t) = (is.head, is.tail)
+        val sums = t.map((i: Int) => {
+          (h + i, i, h)
+        })
+        val found = sums.find(_._1 == 2020)
+        innerFind(t, found)
+      end if
 
-          val (h,t) = (is.head, is.tail)
-          val sums = t.map( (i:Int) => { ( h + i, i, h) }  )
-          val found = sums.find( _._1 == 2020 )
-          innerFind( t, found )
+    end innerFind
 
-        }
-      }
-
-    }
-
-    innerFind(src, None )
+    innerFind(src, None)
 
   }
+
+
 
   def part2( is : List[Int] ) = {
 
@@ -90,36 +88,30 @@ object Day01 {
 
     def innerPart2( l : Long, winner : Option[(Int,Int,Int)] ) : Option[(Int,Int,Int)] = {
 
-      if( l > max ) {
+      if( l > max )
         None
-      }
-      else if( winner.isDefined ) {
+      else if( winner.isDefined ) then
         winner
-      }
-      else {
-
+      else
         var s = l.toBinaryString
         s = s.reverse.padTo(64, '0')
 
         val ones = s.filter( _ == '1')
-        val res = if (ones.length == 3) {
+        val res = if (ones.length == 3) then
           val a = s.indexOf('1', 0)
           val b = s.indexOf('1', (a + 1))
           val c = s.indexOf('1', (b + 1))
           val sum = opt(a) + opt(b) + opt(c)
-          if (sum == 2020) {
+          if (sum == 2020) then
             Some( (a, b, c) )
-          }
-          else {
+          else
             None
-          }
-        }
-        else { None }
+        else
+          None
 
         innerPart2( l + 1, res )
+      end if
 
-
-      }
     }
 
     innerPart2( 0, None )
