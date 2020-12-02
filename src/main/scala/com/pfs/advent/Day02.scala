@@ -18,9 +18,7 @@ object Day02 {
     cs.size >= policy.min && cs.size <= policy.max
 
   def isValid2(policy: Policy): Boolean = 
-    val p1 = if (policy.password(policy.min - 1) == policy.c) 1 else 0
-    val p2 = if (policy.password(policy.max - 1) == policy.c) 1 else 0
-    p1 + p2 == 1
+    (policy.password(policy.min - 1) == policy.c) ^  (policy.password(policy.max - 1) == policy.c)
 
   case class Policy(min: Int, max: Int, c: Char, password: String)
 
