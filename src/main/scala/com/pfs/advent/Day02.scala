@@ -1,16 +1,14 @@
 package com.pfs.advent
 
-import scala.Console.println
-
 object Day02 {
 
   def main(args: Array[String]): Unit = 
     Console.println("2020 02 01")
     val ps = input.split("\n").toList.map(_.trim).map(parse2).flatten
-    ps.foreach(Console.out.println(_))
-    val validps = ps.filter(isValid(_))
+    ps.foreach(Console.out.println)
+    val validps = ps.filter(isValid)
     Console.out.println(validps.size)
-    val validps2 = ps.filter(isValid2(_))
+    val validps2 = ps.filter(isValid2)
     Console.out.println(validps2.size)
 
   def isValid(policy: Policy): Boolean =
@@ -24,14 +22,9 @@ object Day02 {
 
   def parse2( src : String ) : Option[Policy] =
     val pregex = """(\d+)-(\d+) ([a-zA-Z]): (.*)""".r
-    src match {
-      case pregex( min, max, c, pwd ) => {
-        Some( Policy( min.toInt, max.toInt, c(0), pwd ) )
-      }
-      case _ => {
-        None
-      }
-    }
+    src match 
+      case pregex( min, max, c, pwd ) =>  Some( Policy( min.toInt, max.toInt, c(0), pwd ) ) 
+      case _ => None
   end parse2
   
   val input =
