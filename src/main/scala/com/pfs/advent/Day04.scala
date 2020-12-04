@@ -78,9 +78,9 @@ object Day04 {
   
   def isValid2( map : Map[String,String] ) : Boolean = {
     Console.out.println(map)
-    val checks = List( isValidYear( map.getOrElse("byr", ""), 1920, 2002 ),
-      isValidYear(map.getOrElse("iyr", ""), 2010, 2020 ),
-      isValidYear(map.getOrElse("eyr", ""), 2020, 2030 ),
+    val checks = List( isValidYear( map.getOrElse("byr", "0").toInt, 1920, 2002 ),
+      isValidYear(map.getOrElse("iyr", "0").toInt, 2010, 2020 ),
+      isValidYear(map.getOrElse("eyr", "0").toInt, 2020, 2030 ),
       isValidHeight( map.getOrElse("hgt", "") ),
       isValidHairColor( map.getOrElse("hcl", "") ),
       isValidEyeColor( map.getOrElse("ecl", "") ),
@@ -92,31 +92,19 @@ object Day04 {
     
   }
   
-  def isValidYear( src : String, min : Int, max : Int ) = {
-    if( src.trim.length == 4 ) then 
-      val i = src.toInt
-      i >= min && i <= max
-    else 
-      false
-  }
-  
+  def isValidYear( y : Int, min : Int, max : Int ) = { y >= min && y <= max }
+
   def isValidHeight( src : String ) : Boolean = {
-    if( !src.trim.isEmpty ) then 
-      val units = src.substring( src.length - 2 )
-      units match {
-        case "cm" => { 
-          val h = src.substring(0,src.length-2).toInt
-          h >= 150 && h <= 193
-        }
-        case "in" => {
-          val h = src.substring(0,src.length-2).toInt
-          h >= 59 && h <= 76
-        }
-        case _ => false
-      }
-    else 
-      false
-    end if 
+    val hgt = """([0-9]{2,3})(in|cm)""".r
+    src match 
+      case hgt( h, u ) => 
+        u match 
+          case "in" => h.toInt >= 59 && h.toInt <= 76
+          case "cm" => h.toInt >= 150 && h.toInt <= 193
+          case _ => false
+        end match 
+      case _ => false
+    end match
   }
   
   def isValidHairColor( src : String ) : Boolean = {
