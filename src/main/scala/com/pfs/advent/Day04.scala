@@ -9,10 +9,10 @@ object Day04 {
     Console.out.println("2020 04")
     val pass1 = parse1(input)
     val pass2 = pass1.map( parse2(_))
-    pass2.foreach(Console.out.println(_))
+    // pass2.foreach(Console.out.println(_))
     val valid = pass2.filter( isValid(_))
-    Console.out.println( pass1.size )
-    Console.out.println( valid.size )
+    // Console.out.println( pass1.size )
+    // Console.out.println( valid.size )
     val v2 = pass2.filter( isValid2( _ ))
     Console.out.println( v2.size )
   }
@@ -76,54 +76,20 @@ object Day04 {
     required.diff(ks).isEmpty
   }
 
-  def isValid2( map : Map[String,String] ) : Boolean = {
-    Console.out.println(map)
-    val checks = List( isValidBYear( map.getOrElse("byr", "") ),
-      isValidIYear(map.getOrElse("iyr", "") ),
-      isValidEYear(map.getOrElse("eyr", "") ),
-      isValidHeight( map.getOrElse("hgt", "") ),
-      isValidHairColor( map.getOrElse("hcl", "") ),
-      isValidEyeColor( map.getOrElse("ecl", "") ),
-      isValidPassport( map.getOrElse("pid", "") ) )
-
-    Console.out.println(checks)
-    Console.out.println(checks.forall( _ == true ))
-    checks.forall( _ == true )
-
+  def isValid2( vals : Map[String,String] ) : Boolean = {
+    val req = required.map( k => ( k, vals.getOrElse(k, "") ) )
+    val checks = req.map( kv => ( kv._1, rmap(kv._1).matches( kv._2)) )
+    checks.forall( _._2 == true )
   }
-
-  val byr = """19[2-9][0-9]|200[0-2]""".r
-  def isValidBYear( src : String ) = byr.matches(src)
   
-  val iyr = """201[0-9]|2020""".r
-  def isValidIYear( src : String ) = iyr.matches(src)
-  
-  val eyr = """202[0-9]|2030""".r
-  def isValidEYear( src : String ) = eyr.matches(src)
-  
-  def isValidYear( y : Int, min : Int, max : Int ) = { y >= min && y <= max }
-
-  val hgt = """1[5-8][0-9]cm|19[0-3]cm|59in|6[0-9]in|7[0-6]in""".r
-  
-  def isValidHeight( src : String ) : Boolean = hgt.matches(src) 
-
-  val hc = """#([a-zA-Z0-9]{6})""".r
-  
-  def isValidHairColor( src : String ) : Boolean = hc.matches(src)
-
-  val eyecolors = """(amb|blu|brn|gry|grn|hzl|oth)""".r
-
-  def isValidEyeColor( src : String ) = eyecolors.matches(src)
-
-  val pid = """([0-9]{9})""".r
-  
-  def isValidPassport( src : String ) : Boolean = pid.matches(src)
-
-  /*
-  src match
-    case pid( passport ) => true
-    case _ => false
-  */
+  val rmap = Map(
+    ( "byr" -> """19[2-9][0-9]|200[0-2]""".r ),
+    ( "iyr" -> """201[0-9]|2020""".r ),
+    ( "eyr" -> """202[0-9]|2030""".r ),
+    ( "hgt" -> """1[5-8][0-9]cm|19[0-3]cm|59in|6[0-9]in|7[0-6]in""".r ),
+    ( "hcl" -> """#([a-zA-Z0-9]{6})""".r ),
+    ( "ecl" -> """(amb|blu|brn|gry|grn|hzl|oth)""".r ),
+    ( "pid" -> """([0-9]{9})""".r ) )
 
   val input =
     """hgt:159cm
