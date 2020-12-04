@@ -9,6 +9,9 @@ object Tester {
     
     Console.out.println( b1 ^ b2)
     
+    val is = 0 until 11 by 2
+    Console.out.println( is.toList )
+    
   }
 
 }

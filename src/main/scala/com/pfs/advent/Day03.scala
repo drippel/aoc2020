@@ -16,29 +16,25 @@ object Day03 {
   def part2( grid : List[String], slopes : List[(Int,Int)]) =
     val answers = slopes.map( part1(grid, _)).map( _.toLong )
     answers.foreach(Console.out.println(_))
-    answers.foldRight(1L)( (a:Long,b:Long) => { a * b })
+    answers.foldRight(1L)( _ * _ )
   end part2
   
-  def part1( grid : List[String], slope : (Int,Int) ) = {
+  def part1( grid : List[String], slope : (Int,Int) ) : Int = 
     Console.out.println("part1...")
     
     def calcNextPos( pos : (Int,Int), line : String ) =
-      if( pos._1 + slope._1 >= line.length ) {
+      if( pos._1 + slope._1 >= line.length ) then 
         ( pos._1 + slope._1 - line.length, pos._2 + slope._2 )
-      }
-      else {
+      else 
         (pos._1 + slope._1, pos._2 + slope._2)
-      }
+      
     end calcNextPos
     
-    def innerPart1( pos : (Int,Int), treeCount : Int ) : Int = {
+    def innerPart1( pos : (Int,Int), treeCount : Int ) : Int = 
       
-      Console.out.println(pos)
-      
-      if( pos._2 >= grid.length ) {
+      if( pos._2 >= grid.length ) then 
         treeCount
-      }
-      else {
+      else 
         val currentLine = grid(pos._2)
         val nextCount = if( currentLine(pos._1) == '#') then
           treeCount + 1
@@ -47,12 +43,10 @@ object Day03 {
         val nextPos = calcNextPos( pos, currentLine )
         
         innerPart1( nextPos, nextCount )
-      }
-    }
+      
+    end innerPart1 
     
     innerPart1( (0,0), 0 )
-  }
-
   end part1
   
   val test =
