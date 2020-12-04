@@ -81,7 +81,7 @@ object Day04 {
     val checks = List( isValidYear( map.getOrElse("byr", "0").toInt, 1920, 2002 ),
       isValidYear(map.getOrElse("iyr", "0").toInt, 2010, 2020 ),
       isValidYear(map.getOrElse("eyr", "0").toInt, 2020, 2030 ),
-      isValidHeight( map.getOrElse("hgt", "") ),
+      isValidHeight2( map.getOrElse("hgt", "") ),
       isValidHairColor( map.getOrElse("hcl", "") ),
       isValidEyeColor( map.getOrElse("ecl", "") ),
       isValidPassport( map.getOrElse("pid", "") ) )
@@ -96,6 +96,8 @@ object Day04 {
 
   val hgt = """([0-9]{2,3})(in|cm)""".r
   
+  val hgt2 = """1[5-8][0-9]cm|19[0-3]cm|59in|6[0-9]in|7[0-6]in""".r
+  
   def isValidHeight( src : String ) : Boolean = {
     src match
       case hgt( h, u ) =>
@@ -107,14 +109,16 @@ object Day04 {
       case _ => false
     end match
   }
+  
+  def isValidHeight2( src : String ) : Boolean = hgt2.matches(src) 
 
   val hc = """#([a-zA-Z0-9]{6})""".r
   
   def isValidHairColor( src : String ) : Boolean = hc.matches(src)
 
-  val eyecolors = Set( "amb", "blu", "brn", "gry", "grn", "hzl", "oth" )
+  val eyecolors = """(amb|blu|brn|gry|grn|hzl|oth)""".r
 
-  def isValidEyeColor( src : String ) = eyecolors.contains(src)
+  def isValidEyeColor( src : String ) = eyecolors.matches(src)
 
   val pid = """([0-9]{9})""".r
   
