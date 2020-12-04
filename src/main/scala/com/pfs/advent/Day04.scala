@@ -19,17 +19,17 @@ object Day04 {
 
 
   def parse1( src : String ) : List[List[String] ] = {
-    
+
     val passports = ListBuffer[List[String]]()
-    
+
     val ls = src.split("\n").toList
-    
+
     def innerParse1( data : List[String], currentPassport : List[String] ) : Unit = {
-      
+
       if( data.isEmpty ) then
         passports += currentPassport
         Console.out.println("done")
-      else 
+      else
         // get the current line
         val (h,t) = (data.head, data.tail)
         val nextPassport = if( h.trim.isEmpty ) then
@@ -37,37 +37,37 @@ object Day04 {
           List[String]()
         else
           currentPassport :+ h.trim
-      
+
         innerParse1( t, nextPassport )
-        
+
       end if
-      
+
     }
-    
+
     innerParse1( ls, List())
-    
+
     passports.toList
-    
+
   }
   
   def parse2( src : List[String] ) : Map[String,String] = {
-    
+
     val passport = mutable.HashMap[String,String]()
-    
+
     for( l <- src ) {
-      
+
       val kvs = l.trim.split(" ")
       for( kv <- kvs ) {
-        
+
         val parts = kv.split(":")
         passport += ( parts(0) -> parts(1) )
       }
-      
+
     }
-    
+
     passport.toMap
   }
-  
+
   // cid is not required
   val required = Set( "byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid" )
   
@@ -75,7 +75,7 @@ object Day04 {
     val ks = map.keySet
     required.diff(ks).isEmpty
   }
-  
+
   def isValid2( map : Map[String,String] ) : Boolean = {
     Console.out.println(map)
     val checks = List( isValidYear( map.getOrElse("byr", "0").toInt, 1920, 2002 ),
@@ -89,42 +89,43 @@ object Day04 {
     Console.out.println(checks)
     Console.out.println(checks.forall( _ == true ))
     checks.forall( _ == true )
-    
+
   }
-  
+
   def isValidYear( y : Int, min : Int, max : Int ) = { y >= min && y <= max }
 
+  val hgt = """([0-9]{2,3})(in|cm)""".r
+  
   def isValidHeight( src : String ) : Boolean = {
-    val hgt = """([0-9]{2,3})(in|cm)""".r
-    src match 
-      case hgt( h, u ) => 
-        u match 
+    src match
+      case hgt( h, u ) =>
+        u match
           case "in" => h.toInt >= 59 && h.toInt <= 76
           case "cm" => h.toInt >= 150 && h.toInt <= 193
           case _ => false
-        end match 
+        end match
       case _ => false
     end match
   }
+
+  val hc = """#([a-zA-Z0-9]{6})""".r
   
-  def isValidHairColor( src : String ) : Boolean = {
-    val hc = """#([a-zA-Z0-9]{6})""".r
-    src match
-      case hc( color ) => true
-      case _ => false
-  }
-  
+  def isValidHairColor( src : String ) : Boolean = hc.matches(src)
+
   val eyecolors = Set( "amb", "blu", "brn", "gry", "grn", "hzl", "oth" )
-  
+
   def isValidEyeColor( src : String ) = eyecolors.contains(src)
+
+  val pid = """([0-9]{9})""".r
   
-  def isValidPassport( src : String ) : Boolean = {
-    val pid = """([0-9]{9})""".r
-    src match
-      case pid( passport ) => true
-      case _ => false
-  }
-  
+  def isValidPassport( src : String ) : Boolean = pid.matches(src)
+
+  /*
+  src match
+    case pid( passport ) => true
+    case _ => false
+  */
+
   val input =
     """hgt:159cm
       pid:561068005 eyr:2025 iyr:2017 cid:139 ecl:blu hcl:#ceb3a1
