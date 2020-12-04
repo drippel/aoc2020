@@ -78,10 +78,10 @@ object Day04 {
 
   def isValid2( map : Map[String,String] ) : Boolean = {
     Console.out.println(map)
-    val checks = List( isValidYear( map.getOrElse("byr", "0").toInt, 1920, 2002 ),
-      isValidYear(map.getOrElse("iyr", "0").toInt, 2010, 2020 ),
-      isValidYear(map.getOrElse("eyr", "0").toInt, 2020, 2030 ),
-      isValidHeight2( map.getOrElse("hgt", "") ),
+    val checks = List( isValidBYear( map.getOrElse("byr", "") ),
+      isValidIYear(map.getOrElse("iyr", "") ),
+      isValidEYear(map.getOrElse("eyr", "") ),
+      isValidHeight( map.getOrElse("hgt", "") ),
       isValidHairColor( map.getOrElse("hcl", "") ),
       isValidEyeColor( map.getOrElse("ecl", "") ),
       isValidPassport( map.getOrElse("pid", "") ) )
@@ -92,25 +92,20 @@ object Day04 {
 
   }
 
+  val byr = """19[2-9][0-9]|200[0-2]""".r
+  def isValidBYear( src : String ) = byr.matches(src)
+  
+  val iyr = """201[0-9]|2020""".r
+  def isValidIYear( src : String ) = iyr.matches(src)
+  
+  val eyr = """202[0-9]|2030""".r
+  def isValidEYear( src : String ) = eyr.matches(src)
+  
   def isValidYear( y : Int, min : Int, max : Int ) = { y >= min && y <= max }
 
-  val hgt = """([0-9]{2,3})(in|cm)""".r
+  val hgt = """1[5-8][0-9]cm|19[0-3]cm|59in|6[0-9]in|7[0-6]in""".r
   
-  val hgt2 = """1[5-8][0-9]cm|19[0-3]cm|59in|6[0-9]in|7[0-6]in""".r
-  
-  def isValidHeight( src : String ) : Boolean = {
-    src match
-      case hgt( h, u ) =>
-        u match
-          case "in" => h.toInt >= 59 && h.toInt <= 76
-          case "cm" => h.toInt >= 150 && h.toInt <= 193
-          case _ => false
-        end match
-      case _ => false
-    end match
-  }
-  
-  def isValidHeight2( src : String ) : Boolean = hgt2.matches(src) 
+  def isValidHeight( src : String ) : Boolean = hgt.matches(src) 
 
   val hc = """#([a-zA-Z0-9]{6})""".r
   
