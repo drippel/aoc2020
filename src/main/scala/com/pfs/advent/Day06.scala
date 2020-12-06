@@ -1,21 +1,48 @@
 package com.pfs.advent
 
+import scala.collection.mutable
+
 object Day06 {
   
   def main( args : Array[String] ) : Unit = {
     Console.out.println("2020 06")
     val gs = parseGroups(input)
     gs.foreach(Console.out.println(_))
-    val yeses = gs.map(_.toSet)
-    yeses.foreach(Console.out.println(_))
-    val szs = yeses.map( _.size )
-    val count = szs.foldRight(0)( (a,b) => { a + b })
-    Console.out.println(count)
+    val ys = gs.map( countYeses(_))
+    ys.foreach(Console.out.println(_))
+    val gszs = gs.map( _.size )
+    val combined = gszs.zip(ys)
+    combined.foreach(Console.out.println(_))
+    val f = combined.map( t => (t._1,filterMap( t._1, t._2)))
+    f.foreach(Console.out.println(_))
+    val is = f.map( _._2.size )
+    Console.out.println( is.foldRight(0)( _ + _ ))
+    
+  }
+  
+  def filterMap( sz : Int, ys : Map[Char,Int] ) : Map[Char,Int] = {
+    ys.filter( t => { t._2 == sz })
+  }
+  
+  val questions = ( 'a' to 'z' ).toSet
+  
+  def countYeses( group : List[String] ) : Map[Char,Int] = {
+    
+    val yes = mutable.HashMap[Char,Int]()
+    
+    for( m <- group ) {
+      val ms = m.toSet
+      for( c <- ms ) {
+        yes(c) = yes.getOrElse(c,0) + 1
+      }
+    }
+    
+    yes.toMap
   }
 
 
-  def parseGroups( src : String ) : List[String] =
-    def innerParse( lines : List[String], currentGroup : String, allGroups : List[String] ) : List[String] =
+  def parseGroups( src : String ) : List[List[String]] =
+    def innerParse( lines : List[String], currentGroup : List[String], allGroups : List[List[String]] ) : List[List[String]] =
       if ( lines.isEmpty ) { 
         allGroups :+ currentGroup
       }
@@ -24,17 +51,17 @@ object Day06 {
         val (nextGroup, nextGroups) = if (h.isEmpty ) {
           // end the current group
           // start a new group
-          ("", allGroups :+ currentGroup)
+          (List(), allGroups :+ currentGroup)
         }
         else {
           // add the line to next group
-          (currentGroup + h, allGroups)
+          (currentGroup :+ h, allGroups)
         }
         innerParse(t, nextGroup, nextGroups)
       }
     end innerParse  
     
-    innerParse( src.split("\n").toList.map(_.trim), "", List() )
+    innerParse( src.split("\n").toList.map(_.trim), List(), List() )
   
   end parseGroups  
   
