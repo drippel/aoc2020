@@ -8,19 +8,45 @@ object Day07 {
     Console.out.println("2020 07...")
     val ls = input.split("\n").toList.map(_.trim)
     val bs = ls.map(parse(_))
-    bs.foreach(Console.out.println(_))
     val ps = findDirectParents("shiny gold", bs )
-    ps.foreach(Console.out.println(_))
-    Console.out.println( ps.size )
     val cs = findContaining("shiny gold", bs )
-    cs.foreach(Console.out.println(_))
-    Console.out.println( cs.size )
     val dcs = cs.toSet
-    Console.out.println( dcs.size )
+    
+    val bt = bs.map( b => ( b.code -> b ))
+    val bagMap = bt.toMap
+    
+    Console.out.println(walkDown("shiny gold", bagMap ) )
+    Console.out.println( "and minus one for the outer shiny gold bag")
+    
   }
   
-  def findContaining( start : String, bags : List[Bag] ) : List[Bag] = 
+  def walkDown( code : String, bm : Map[String,Bag] ) : Int = {
     
+    
+    def innerWalkDown( current : Bag ) : Int = {
+      
+      if( current.children.isEmpty ) {
+        1
+      }
+      else {
+
+        // note the toList - otherwise its sill a map and wrong
+        val bs = current.children.toList.map( kv => ( bm(kv._1), kv._2 ) )
+        val cs = bs.map( t => ( innerWalkDown(t._1), t._2 ))
+        val is = cs.map( t => ( t._1 * t._2 ))
+        is.foldRight(1)( _ + _ )
+        
+      }
+      
+    }
+
+    innerWalkDown(bm(code))
+    
+  }
+  
+
+  def findContaining( start : String, bags : List[Bag] ) : List[Bag] =
+
     def findContainingInner( parents : List[Bag], accum : List[Bag] ) : List[Bag] = {
       if( parents.isEmpty ) {
         accum
@@ -28,18 +54,18 @@ object Day07 {
       else {
         // add the current parents to accum
         val nextAccum = accum ++ parents
-        
+
         val nextParents = parents.map( b => findDirectParents( b.code, bags ) ).flatten
-        
+
         findContainingInner( nextParents, nextAccum )
       }
     }
 
-    Console.out.println( findDirectParents(start, bags) )
+    // Console.out.println( findDirectParents(start, bags) )
     findContainingInner( findDirectParents(start, bags), List() )
-    
+
   end findContaining
-  
+
   def findDirectParents( start : String, bags : List[Bag] ) : List[Bag] = {
     val ps = bags.filter( b => b.children.contains(start) )
     ps.toList
@@ -94,7 +120,7 @@ object Day07 {
       vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
       faded blue bags contain no other bags.
       dotted black bags contain no other bags."""
-      
+
   val test2 =
     """shiny gold bags contain 2 dark red bags.
       dark red bags contain 2 dark orange bags.
