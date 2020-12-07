@@ -1,4 +1,4 @@
-package com.pfs.advent
+package com.pfs.advent.grid
 
 import scala.collection.immutable.ListSet
 

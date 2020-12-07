@@ -1,4 +1,4 @@
-package com.pfs.advent
+package com.pfs.advent.cpu
 
 class CPU {
 
