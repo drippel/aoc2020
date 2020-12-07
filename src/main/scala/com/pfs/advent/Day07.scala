@@ -6,17 +6,19 @@ object Day07 {
   
   def main( args : Array[String] ) : Unit = {
     Console.out.println("2020 07...")
-    val ls = input.split("\n").toList.map(_.trim)
-    val bs = ls.map(parse(_))
-    val ps = findDirectParents("shiny gold", bs )
-    val cs = findContaining("shiny gold", bs )
+    // val ls = input.split("\n").toList.map(_.trim)
+    // val bs = ls.map(parse(_))
+    val bs = parse2(input)
+    val ps = findDirectParents("shinygold", bs )
+    val cs = findContaining("shinygold", bs )
     val dcs = cs.toSet
     
     val bt = bs.map( b => ( b.code -> b ))
     val bagMap = bt.toMap
     
-    Console.out.println(walkDown("shiny gold", bagMap ) )
+    Console.out.println(walkDown("shinygold", bagMap ) )
     Console.out.println( "and minus one for the outer shiny gold bag")
+    
     
   }
   
@@ -108,6 +110,63 @@ object Day07 {
     } 
     
     ps.toMap
+  }
+  
+  def parse2( raw : String ) = {
+    val lines = raw.replace("contain", "-")
+      .replace( "bags", "" )
+      .replace("bag", "" )
+      .replace(".", ",")
+      .replace(" ", "")
+      .split("\n")
+      .toList
+      .map( _.trim )
+    lines.foreach(Console.out.println(_))
+    
+    lines.map(p1(_))
+  }
+  
+  val r1 = """([a-z]+)-([a-z0-9,]+)""".r
+  
+  def p1( line : String ) = {
+    line match {
+      case r1( cd, rest ) => {
+        Bag( cd, p2(rest) )
+      }
+      case _ => { throw new IllegalArgumentException(line) }
+    }
+  }
+  
+  val r2 = """noother|([0-9a-z,]+)""".r
+  def p2( line : String ) = {
+    line match {
+      case r2( "noother," ) => { 
+        Console.out.println(s"none") 
+        Map[String,Int]()
+      }
+      case r2( cs : _* ) => { 
+        //Console.out.println(s"${cs} ${cs.size}") 
+        val res = p3(cs.head)
+        res.toMap
+      }
+      case _ => { throw new IllegalArgumentException(line) }
+    }
+  }
+  
+  val r3 = """([0-9]+[a-z]+,)""".r
+  def p3( line : String ) = {
+    Console.out.println(line)
+    val ms = r3.findAllIn(line).toList
+    Console.out.println(ms.size)
+    ms.map( p4(_))
+  }
+
+  val r4 = """([0-9]+)([a-z]+),""".r
+  def p4( line : String ) = {
+    line match {
+      case r4( i, c ) => ( c, i.toInt )
+      case _ => { throw new IllegalArgumentException(line) }
+    }
   }
   
   val test =
