@@ -1,79 +1,49 @@
 package com.pfs.advent
 
+import org.graphstream.graph.implementations.SingleGraph
+
 import scala.collection.mutable
 
-object Day07 {
+object Day07gs {
+
+  def main(args: Array[String]) : Unit =
+    Console.out.println("2020 07 graphstream")
+    val ls = test.split("\n").toList.map(_.trim)
+    val bs = ls.map(parse(_))
+    bs.foreach(Console.out.println(_))
+    val graph = new SingleGraph("Bags")
+    addNodes( graph, bs )
+    addEdges( graph, bs )
+    System.setProperty("org.graphstream.ui", "swing");
+    graph.display()
+  end main
   
-  def main( args : Array[String] ) : Unit = {
-    Console.out.println("2020 07...")
-    // val ls = input.split("\n").toList.map(_.trim)
-    // val bs = ls.map(parse(_))
-    val bs = parse2(input)
-    val ps = findDirectParents("shinygold", bs )
-    val cs = findContaining("shinygold", bs )
-    val dcs = cs.toSet
-    
-    val bt = bs.map( b => ( b.code -> b ))
-    val bagMap = bt.toMap
-    
-    Console.out.println(walkDown("shinygold", bagMap ) )
-    Console.out.println( "and minus one for the outer shiny gold bag")
-    
-    
+  def addNodes( graph : SingleGraph, bags : List[Bag] ) = {
+    for( bag <- bags ) {
+      val n = graph.addNode( bag.code )
+      n.setAttribute("label", bag.code)
+    }
   }
   
-  def walkDown( code : String, bm : Map[String,Bag] ) : Int = 
-    def innerWalkDown( current : Bag ) : Int = 
-      
-      if( current.children.isEmpty ) then 
-        1
-      else 
-        // note the toList - otherwise its sill a map and wrong
-        val bs = current.children.toList.map( kv => ( bm(kv._1), kv._2 ) )
-        val cs = bs.map( t => ( innerWalkDown(t._1), t._2 ))
-        val is = cs.map( t => ( t._1 * t._2 ))
-        is.foldRight(1)( _ + _ )
-      end if
-      
-    end innerWalkDown 
-
-    innerWalkDown(bm(code))
+  def addEdges( graph : SingleGraph, bags : List[Bag] ) = {
     
-  end walkDown
-  
-
-  def findContaining( start : String, bags : List[Bag] ) : List[Bag] =
-
-    def findContainingInner( parents : List[Bag], accum : List[Bag] ) : List[Bag] = {
-      if( parents.isEmpty ) {
-        accum
-      }
-      else {
-        // add the current parents to accum
-        val nextAccum = accum ++ parents
-
-        val nextParents = parents.map( b => findDirectParents( b.code, bags ) ).flatten
-
-        findContainingInner( nextParents, nextAccum )
+    for( bag <- bags ) {
+      for( c <- bag.children ) {
+        val nm = bag.code + "->" + c._1 
+        val e = graph.addEdge( nm, bag.code, c._1 )
+        e.setAttribute("weight", c._2.toString )
+        e.setAttribute("label", c._2.toString )
       }
     }
-
-    // Console.out.println( findDirectParents(start, bags) )
-    findContainingInner( findDirectParents(start, bags), List() )
-
-  end findContaining
-
-  def findDirectParents( start : String, bags : List[Bag] ) : List[Bag] = {
-    bags.filter( b => b.children.contains(start) ).toList
+    
   }
 
-
   case class Bag( val code : String, val children : Map[String,Int] )
-  
+
   def parse( src : String ) : Bag = {
     val p1 = src.split("contain")
     val code = clean( p1(0).trim )
-    
+
     val cs = if( p1(1).contains( "no other" ) ) {
       Map()
     }
@@ -81,88 +51,31 @@ object Day07 {
       val p2 = p1(1).trim.split(",").toList.map(_.trim)
       parseChilren(p2)
     }
-    
+
     Bag( code, cs )
-    
+
   }
-  
+
   def clean( cd : String ) = {
     val t = cd.trim.replace(".", "" )
     val t2 = t.trim.replace("bags", "" )
     t2.replace("bag", "" ).trim
   }
-  
+
   def parseChilren( ss : List[String] ) : Map[String,Int] = {
-    
+
     val ps = mutable.HashMap[String,Int]()
-    
+
     for( s <- ss ) {
       val p = s.splitAt(s.indexOf(' '))
       val i = p(0).toInt
       val cd = p(1)
       ps += ( clean( cd.trim ) -> i )
-    } 
-    
+    }
+
     ps.toMap
   }
-  
-  def parse2( raw : String ) = {
-    val lines = raw.replace("contain", "-")
-      .replace( "bags", "" )
-      .replace("bag", "" )
-      .replace(".", ",")
-      .replace(" ", "")
-      .split("\n")
-      .toList
-      .map( _.trim )
-    lines.foreach(Console.out.println(_))
-    
-    lines.map(p1(_))
-  }
-  
-  val r1 = """([a-z]+)-([a-z0-9,]+)""".r
-  
-  def p1( line : String ) = {
-    line match {
-      case r1( cd, rest ) => {
-        Bag( cd, p2(rest) )
-      }
-      case _ => { throw new IllegalArgumentException(line) }
-    }
-  }
-  
-  val r2 = """noother|([0-9a-z,]+)""".r
-  def p2( line : String ) = {
-    line match {
-      case r2( "noother," ) => { 
-        Console.out.println(s"none") 
-        Map[String,Int]()
-      }
-      case r2( cs : _* ) => { 
-        //Console.out.println(s"${cs} ${cs.size}") 
-        val res = p3(cs.head)
-        res.toMap
-      }
-      case _ => { throw new IllegalArgumentException(line) }
-    }
-  }
-  
-  val r3 = """([0-9]+[a-z]+,)""".r
-  def p3( line : String ) = {
-    Console.out.println(line)
-    val ms = r3.findAllIn(line).toList
-    Console.out.println(ms.size)
-    ms.map( p4(_))
-  }
 
-  val r4 = """([0-9]+)([a-z]+),""".r
-  def p4( line : String ) = {
-    line match {
-      case r4( i, c ) => ( c, i.toInt )
-      case _ => { throw new IllegalArgumentException(line) }
-    }
-  }
-  
   val test =
     """light red bags contain 1 bright white bag, 2 muted yellow bags.
       dark orange bags contain 3 bright white bags, 4 muted yellow bags.
@@ -174,15 +87,6 @@ object Day07 {
       faded blue bags contain no other bags.
       dotted black bags contain no other bags."""
 
-  val test2 =
-    """shiny gold bags contain 2 dark red bags.
-      dark red bags contain 2 dark orange bags.
-      dark orange bags contain 2 dark yellow bags.
-      dark yellow bags contain 2 dark green bags.
-      dark green bags contain 2 dark blue bags.
-      dark blue bags contain 2 dark violet bags.
-      dark violet bags contain no other bags."""
-      
   val input =
     """muted lime bags contain 1 wavy lime bag, 1 vibrant green bag, 3 light yellow bags.
       light red bags contain 2 clear indigo bags, 3 light lime bags.
