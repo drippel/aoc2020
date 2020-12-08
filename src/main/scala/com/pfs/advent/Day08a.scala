@@ -4,171 +4,102 @@ import java.util.Date
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-object Day08 {
+object Day08a {
 
 
   def main(args : Array[String] ) : Unit = {
     Console.out.println("2020 08")
-    val prog = parse(input)
+    
+    val ls = input.split("\n").toList.map( _.trim )
+    val lines = ls.map( _.split(" " ) ).map(_.toList) 
     val start = new Date()
-    val cpu = Computer()
-    cpu.boot()
-    cpu.load(prog)
-    Console.out.println(cpu.run())
-    val result = optimizer(prog)
-    Console.out.println(result)
+    Console.out.println(run(lines))
+    Console.out.println(optimize(lines))
     val end = new Date()
     Console.out.println( end.getTime - start.getTime )
-
   }
   
-  def optimizer( prog : List[Line] ) = {
+  def optimize( lines : List[List[String]] ) = {
 
-    val nops = prog.filter( _.code.equalsIgnoreCase("nop") ).map( _.lineNumber ).map( i => ( "nop", "jmp", i ) )
-    val jmps = prog.filter( _.code.equalsIgnoreCase("jmp") ).map( _.lineNumber ).map( i => ( "jmp", "nop", i ) )
-    val combined = nops ++ jmps
-
-    def innerOptimizer( changes : List[(String,String,Int)], result : (Boolean,Long) ) : (Boolean,Long) = {
-
-      if( changes.isEmpty ) {
-        (false,-1)
+    var result = (false,-1)
+    var i = 0
+    var found = false
+    while( found == false && i < lines.length ) {
+      
+      val prog = ListBuffer[List[String]]()
+      prog ++= lines
+      
+      var skip = false
+      if( prog(i)(0).equalsIgnoreCase("jmp") ) {
+        val nl = List("nop") ++ prog(i).tail
+        prog(i) = nl
       }
-      else if( result._1 == true ) {
-        result
+      else if( prog(i)(0).equalsIgnoreCase("nop")) {
+        val nl = List("jmp") ++ prog(i).tail
+        prog(i) = nl
+      }
+      else { 
+        // skip
+        skip = true
+      }
+      
+      if( !skip ) {
+        val res = run(prog.toList)
+        if (res._1 == true) {
+          result = res
+          found = true
+        }
+      }
+      
+      i = i + 1
+      
+    }
+    
+    result
+    
+  }
+  
+  def run( lines : List[List[String]] ) : (Boolean,Int) = {
+
+    val visited = mutable.HashSet[Int]()
+    var ip = 0
+    var accum = 0
+    var keep = true
+    var ok = false
+    while( keep ){
+
+      if( visited.contains(ip) ) {
+        keep = false
+      }
+      else if( ip >= lines.length ) {
+        keep = false
+        ok = true
       }
       else {
-
-        val (h,t) = (changes.head, changes.tail)
-
-        // Console.out.println(s"changing line ${h._3} from ${h._1} to ${h._2}")
-
-        // start with a copy of original program
-        val inMem = ListBuffer[Line]()
-        inMem ++= prog
-
-        // Console.out.println(inMem)
-
-        // modify the program
-        val cl = inMem(h._3)
-        val nl = Line(cl.lineNumber, h._2, cl.args)
-        inMem(h._3) = nl
-
-        // Console.out.println(inMem)
-
-        val cpu = new Computer()
-        cpu.boot()
-        cpu.load(inMem.toList)
-        val nextResult = cpu.run()
-        // Console.out.println(nextResult)
-
-        // call inner result here
-        innerOptimizer( t, nextResult )
-      }
-    }
-
-    innerOptimizer( combined,(false,-1) )
-
-  }
-  
-  class Computer() {
-
-    // disk vs mem?
-    
-    var program = ListBuffer[Line]()
-
-    // write to stdout
-    val stdout = new mutable.Queue[String]()
-
-    // read from stdin
-    val stdin = new mutable.Queue[String]()
-
-    def boot() : Unit = {
-      // nada for now
-    }
-    
-    def load( lines : List[Line] ) = {
-      program.clear()
-      program ++= lines
-    }
-    
-    def run() : (Boolean,Long) = {
-      
-      // make a copy of the currently loaded program
-      val inMem = ListBuffer[Line]()
-      inMem ++= program
-      
-      val debug = false
-      
-      // computer state here
-      val executionCounter = mutable.HashMap[Int,Int]()
-      
-      def innerRun( ip : Int, accum : Long ) : (Boolean,Long) = {
         
-        val cnt = executionCounter.getOrElse(ip,0)
-        if( cnt > 0 ) {
-          // loop detection
-          (false,accum)
-        }
-        else if( ip >= inMem.size || ip < 0 ){
-          // went past end or beginning of the progam - normal termination
-          (true,accum)
-        }
-        else {
+        val l = lines(ip)
 
-          // get the instruction
-          val instruction = inMem(ip)
+        visited += ip
 
-          // increment the count
-          executionCounter(ip) = cnt + 1
-
-          // if it gets complex create a state class and functions?
-          val (next, naccum) = instruction.code match {
-            case "acc" => { (ip + 1, accum + argToInt(instruction.args.head)) }
-            case "jmp" => { (ip + argToInt(instruction.args.head), accum) }
-            case "nop" => { (ip + 1, accum) }
+        l(0) match {
+          case "acc" => {
+            accum = accum + l(1).toInt
+            ip = ip + 1
           }
-
-          innerRun(next, naccum)
+          case "nop" => {
+            ip = ip + 1
+          }
+          case "jmp" => {
+            ip = ip + l(1).toInt
+          }
         }
-        
       }
-      
-      innerRun(0,0L)
-      
+
     }
-    
-    def argToInt( s : String ) = s.toInt
-    
+    ( ok, accum )
   }
-  
-  case class Line( lineNumber : Int, code : String, args : List[String] )
-  
-  def parse( raw : String ) : List[Line] = {
-    
-    def innerParse( lines : List[String], ln : Int, prog : List[Line] ) : List[Line] =
-      if( lines.isEmpty ) then
-        prog
-      else
-        val (h,t) = (lines.head,lines.tail)
-        val ps = h.split(" ").toList.map(_.trim)
-        innerParse( t, ln + 1, ( prog :+ Line( ln, ps.head, ps.tail ) ) )
-      end if
-    end innerParse
-    
-    innerParse(raw.split("\n").toList.map(_.trim), 0, List() )
-  }
-  
-  val test =
-    """nop +0
-      acc +1
-      jmp +4
-      acc +3
-      jmp -3
-      acc -99
-      acc +1
-      jmp -4
-      acc +6"""
-      
+
+
   val input =
     """acc +7
       acc +23

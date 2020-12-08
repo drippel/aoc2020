@@ -2,6 +2,7 @@ val log4jVersion = "2.14.0"
 val dottyVersion = "0.26.0-RC1"
 val graphStreamVersion = "2.0"
 // scalaVersion := "3.0.0-M2",
+val jgraphtVersion = "1.5.0"
 
 lazy val root = project
   .in(file("."))
@@ -15,6 +16,9 @@ lazy val root = project
     libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
     libraryDependencies += "org.graphstream" % "gs-core" % graphStreamVersion,
     libraryDependencies += "org.graphstream" % "gs-algo" % graphStreamVersion,
-    libraryDependencies += "org.graphstream" % "gs-ui-swing" % graphStreamVersion
+    libraryDependencies += "org.graphstream" % "gs-ui-swing" % graphStreamVersion,
+    libraryDependencies += "org.jgrapht" % "jgrapht-core" % jgraphtVersion,
+    libraryDependencies += "org.jgrapht" % "jgrapht-ext" % jgraphtVersion,
+    libraryDependencies += "org.jgrapht" % "jgrapht-io" % jgraphtVersion
 
 )
