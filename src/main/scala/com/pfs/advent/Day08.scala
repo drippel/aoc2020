@@ -1,5 +1,6 @@
 package com.pfs.advent
 
+import java.util.Date
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -12,7 +13,11 @@ object Day08 {
     // cpu.boot()
     // cpu.load(prog)
     // Console.out.println(cpu.run())
-    Console.out.println( optimizer(prog) )
+    val start = new Date()
+    val result = optimizer(prog)
+    val end = new Date()
+    Console.out.println(result)
+    Console.out.println( end.getTime - start.getTime )
     
   }
   
@@ -21,7 +26,6 @@ object Day08 {
     val nops = prog.filter( _.code.equalsIgnoreCase("nop") ).map( _.lineNumber ).map( i => ( "nop", "jmp", i ) )
     val jmps = prog.filter( _.code.equalsIgnoreCase("jmp") ).map( _.lineNumber ).map( i => ( "jmp", "nop", i ) )
     val combined = nops ++ jmps
-    Console.out.println(combined.size)
     
     def innerOptimizer( changes : List[(String,String,Int)], result : (Boolean,Long) ) : (Boolean,Long) = {
       
@@ -35,26 +39,26 @@ object Day08 {
 
         val (h,t) = (changes.head, changes.tail)
         
-        Console.out.println(s"changing line ${h._3} from ${h._1} to ${h._2}")
+        // Console.out.println(s"changing line ${h._3} from ${h._1} to ${h._2}")
 
         // start with a copy of original program
         val inMem = ListBuffer[Line]()
         inMem ++= prog
         
-        Console.out.println(inMem)
+        // Console.out.println(inMem)
         
         // modify the program
         val cl = inMem(h._3)
         val nl = Line(cl.lineNumber, h._2, cl.args)
         inMem(h._3) = nl
         
-        Console.out.println(inMem)
+        // Console.out.println(inMem)
 
         val cpu = new Computer()
         cpu.boot()
         cpu.load(inMem.toList)
         val nextResult = cpu.run()
-        Console.out.println(nextResult)
+        // Console.out.println(nextResult)
 
         // call inner result here
         innerOptimizer( t, nextResult )
