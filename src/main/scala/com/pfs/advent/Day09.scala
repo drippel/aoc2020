@@ -4,19 +4,28 @@ object Day09 {
 
   def main(args: Array[String]): Unit = {
     Console.out.println("2020 09...")
-    val ls = toLines(input)
-    val res = solve( ls.map( _.toLong ), 25 ) 
+    val ls = toLines(input).map(_.toLong)
+    val res = solve( ls, 25 )
     Console.out.println( res )
     if( res.isDefined ) {
       Console.out.println( ls(res.get))
     }
-    
+
+    Console.out.println( part2( ls(res.get), ls ) )
+    val res2 = part2( ls(res.get), ls )
+    if( res2.isDefined ) {
+      val it = res2.get
+      val sub = ls.slice( it._1, it._2 + 1 ).sorted
+      Console.out.println( sub )
+      Console.out.println( sub.head + sub.last  )
+    }
+
   }
-  
+
   def solve( ls : List[Long], preamble : Int  ) = {
-    
+
     def innerSolve( idx : Int, found : Option[Int] ) : Option[Int] = {
-      
+
       if( found.isDefined ) {
         found
       }
@@ -26,25 +35,70 @@ object Day09 {
       else {
 
         val pre = ls.slice(idx - preamble, idx ).toSet
-        val current = ls(idx) 
-        
+        val current = ls(idx)
+
         val found = pre.find( l => pre.contains( current - l ) )
-        
+
         val next = if( found.isDefined ) { None }
         else { Some(idx) }
-        
-        Console.out.println( pre )
-        Console.out.println( found )
+
         innerSolve( idx + 1, next )
-        
+
       }
     }
-    
+
     innerSolve( preamble, None )
-    
+
   }
   
-  
+  def part2( target : Long,  ls : List[Long] ) = {
+    
+    Console.out.println( "finding:" + target)
+    
+    def innerPart2( idx : Int, found : Option[(Int,Int)] ) : Option[(Int,Int)] = {
+      
+      if( found.isDefined ) {
+        found 
+      }
+      else if( idx >= ls.length ) {
+        None
+      }
+      else if( ls(idx) == target ) {
+        innerPart2( idx + 1, None )
+      }
+      else {
+        
+        
+        val start = idx
+        var end = idx + 1
+        var over = false 
+        var sum = ls(start)
+        while( !over ) {
+          Console.out.println( "start:" + start + ", end:" + end )
+          sum = sum + ls(end) 
+          if( sum >= target ){
+            over = true
+          }
+          else {
+            end = end + 1
+          }
+        }
+        
+        val next = if( sum == target ) { Some( start, end ) }
+        else { None }
+        
+        innerPart2( idx + 1, next )
+        
+        
+      }
+      
+    }
+    
+    innerPart2( 0, None )
+    
+  }
+
+
   def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty ) 
   
   val test =
