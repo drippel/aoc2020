@@ -3,10 +3,12 @@ package com.pfs.advent.test
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath
 import org.jgrapht.generate.GridGraphGenerator
 import org.jgrapht.graph.{DefaultEdge, SimpleGraph}
+import org.jgrapht.nio.{Attribute, DefaultAttribute}
 import org.jgrapht.nio.dot.DOTExporter
 import org.jgrapht.util.SupplierUtil
 
 import java.io.{File, FileWriter}
+import java.util
 import java.util.function.Supplier
 
 object JGT {
@@ -49,6 +51,12 @@ object JGT {
     Console.out.println(p2)
 
     val exporter = new DOTExporter[String, DefaultEdge]()
+    exporter.setVertexAttributeProvider(
+      v => {
+        val map = new util.LinkedHashMap[String,Attribute]()
+        map.put("label", DefaultAttribute.createAttribute(v) )
+        map
+    })
     val writer = new FileWriter(new File("g.dot"))
     exporter.exportGraph(gr, writer)
 

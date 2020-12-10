@@ -1,5 +1,12 @@
 package com.pfs.advent
 
+import org.jgrapht.graph.{DefaultEdge, SimpleGraph}
+import org.jgrapht.nio.{Attribute, DefaultAttribute}
+import org.jgrapht.nio.dot.DOTExporter
+
+import java.io.{File, FileWriter}
+import java.util
+import java.util.Date
 import scala.collection.mutable
 
 object Day10 {
@@ -24,7 +31,42 @@ object Day10 {
     
     // println( amap.size )
     // findSingles( amap )
+    val start = new Date()
     println( walk( amap ))
+    val end = new Date()
+    println( end.getTime() - start.getTime() )
+    
+    val ks = amap.keySet.toList.sorted
+    // println( s"${ks.head} , ${ks.last}" )
+    val sa = ks.map( amap(_) )
+    // println(sa)
+    
+    // lets make a graph
+    val gr = new SimpleGraph[String, DefaultEdge](classOf[DefaultEdge])
+    
+    // add the vertices
+    for( a <- sa ) {
+      // println(a.jolts.toString)
+      gr.addVertex(a.jolts.toString)
+    }
+    
+    // add the edges
+    for( a <- sa ) {
+      for( c <- a.children ) {
+        gr.addEdge(a.jolts.toString, c.jolts.toString)
+      }
+    }
+
+
+    val exporter = new DOTExporter[String, DefaultEdge]()
+    exporter.setVertexAttributeProvider(
+      v => {
+        val map = new util.LinkedHashMap[String,Attribute]()
+        map.put("label", DefaultAttribute.createAttribute(v) )
+        map
+      })
+    // val writer = new FileWriter(new File("day10.dot"))
+    // exporter.exportGraph(gr, writer)
     
   }
   
@@ -65,13 +107,13 @@ object Day10 {
       
       val a = amap(idx)
       if( a.jolts == target ) {
-        println("end")
+        // println("end")
         1
       }
       else {
         
         if( cache.contains(idx) ) {
-          println("cache hit")
+          // println("cache hit")
           cache(idx)
         }
         else {
