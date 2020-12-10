@@ -1,9 +1,12 @@
 package com.pfs.advent
 
+import java.util.Date
+
 object Day09 {
 
   def main(args: Array[String]): Unit = {
     Console.out.println("2020 09...")
+    val start = new Date()
     val ls = toLines(input).map(_.toLong)
     val res = solve( ls, 25 )
     Console.out.println( res )
@@ -19,7 +22,20 @@ object Day09 {
       Console.out.println( sub )
       Console.out.println( sub.head + sub.last  )
     }
+    
+    val end = new Date()
+    println( end.getTime - start.getTime )
 
+    val ls2 = toLines(test).map(_.toLong)
+    testSliding( ls2 )
+
+  }
+  
+  def testSliding( ls : List[Long] ) = {
+    val ws = ls.sliding(3,2)
+    for( w <- ws ) {
+      println(w)
+    }
   }
 
   def solve( ls : List[Long], preamble : Int  ) = {
@@ -38,7 +54,7 @@ object Day09 {
         val current = ls(idx)
 
         val found = pre.find( l => pre.contains( current - l ) )
-
+        
         val next = if( found.isDefined ) { None }
         else { Some(idx) }
 
@@ -50,15 +66,15 @@ object Day09 {
     innerSolve( preamble, None )
 
   }
-  
+
   def part2( target : Long,  ls : List[Long] ) = {
-    
+
     Console.out.println( "finding:" + target)
-    
+
     def innerPart2( idx : Int, found : Option[(Int,Int)] ) : Option[(Int,Int)] = {
-      
+
       if( found.isDefined ) {
-        found 
+        found
       }
       else if( idx >= ls.length ) {
         None
@@ -67,38 +83,32 @@ object Day09 {
         innerPart2( idx + 1, None )
       }
       else {
-        
-        
-        val start = idx
-        var end = idx + 1
-        var over = false 
-        var sum = ls(start)
-        while( !over ) {
-          Console.out.println( "start:" + start + ", end:" + end )
-          sum = sum + ls(end) 
-          if( sum >= target ){
-            over = true
+
+        def innerInnerPart2( start : Int, end : Int, sum : Long ) : Option[(Int,Int)] = {
+          
+          if( sum > target ) {
+            None
+          }
+          else if( sum == target ) {
+            Some( (start,end) )
           }
           else {
-            end = end + 1
+            val next = sum + ls(end + 1) 
+            innerInnerPart2( start, end + 1, next )
           }
+
         }
-        
-        val next = if( sum == target ) { Some( start, end ) }
-        else { None }
-        
-        innerPart2( idx + 1, next )
-        
-        
+
+        innerPart2( idx + 1, innerInnerPart2( idx, idx, ls(idx)) )
+
       }
-      
+
     }
-    
+
     innerPart2( 0, None )
-    
+
   }
-
-
+  
   def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty ) 
   
   val test =

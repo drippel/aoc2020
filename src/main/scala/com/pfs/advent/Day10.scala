@@ -1,10 +1,10 @@
-package com.pfs.advent.test
+package com.pfs.advent
 
-object DayT {
+object Day10 {
 
   def main(args: Array[String]): Unit = {
     // day08 - last CPU
-    Console.out.println("2020 T...")
+    Console.out.println("2020 10...")
     val ls = toLines(input)
     ls.foreach(Console.out.println(_))
     
