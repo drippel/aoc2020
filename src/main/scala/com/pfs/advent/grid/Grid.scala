@@ -85,6 +85,24 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
     innerGetAllInDir( rs + dir.row, cs + dir.col, List() )
   }
 
+  def firstInDir( rs : Int, cs : Int, dir : Dir, ec : Char = '.' ) : Option[Char] = {
+
+    def innerFirstInDir( r : Int, c : Int, found : Option[Char] ) : Option[Char] = {
+
+      if( r < 0 || r >= rows || c < 0 || c >= cols || found.isDefined ) { 
+        found 
+      }
+      else {
+        val n = this(r,c)
+        val nf = if( n != ec ) { Some(n) }
+        else { None }
+        innerFirstInDir( r + dir.row, c + dir.col, nf )
+      }
+    }
+    
+    innerFirstInDir( rs + dir.row, cs + dir.col, None )
+
+  }
 }
 
 

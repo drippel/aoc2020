@@ -2,6 +2,8 @@ package com.pfs.advent
 
 import com.pfs.advent.grid.{East, Grid, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West}
 
+import java.time.{Duration, Instant}
+
 object Day11 {
 
   def main(args: Array[String]): Unit = {
@@ -31,7 +33,7 @@ object Day11 {
         
         val next = calcNextGrid( current )
         println("next" + ( steps + 1 ) )
-        Grid.print(next)
+        // Grid.print(next)
         
         // calc the next grid from current
         innerPart( next, Some(current), steps + 1 )
@@ -53,9 +55,8 @@ object Day11 {
       }
       else {
 
-        val next = calcNextGrid2( current )
+        val next = calcNextGrid2o( current )
         println("next" + ( steps + 1 ) )
-        // Grid.print(next)
 
         // calc the next grid from current
         innerPart( next, Some(current), steps + 1 )
@@ -115,16 +116,18 @@ object Day11 {
 
     val next = new Grid( grid.rows, grid.cols )
 
+    val start = Instant.now()
     for( r <- 0 until grid.rows ) {
       for( c <- 0 until grid.cols ) {
         
         val adj = grid.adjacentChars( r, c, true )
-
         val alldirs = List( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
         val allSeen = alldirs.map( grid.getAllInDir( r, c, _ ))
         val removedFloor = allSeen.filter( !_.isEmpty ).map( _.filter( s => s != '.' ))
-        val firstSeen = removedFloor.map( _.headOption ).flatten 
-
+        val firstSeen = removedFloor.map( _.headOption ).flatten
+        
+        
+        
         grid( r, c ) match {
           case n : '.' => {
             next( r, c, n)
@@ -140,6 +143,48 @@ object Day11 {
           }
           case '#' => {
             if( firstSeen.filter( _ == '#' ).size >= 5  ){
+              next( r, c, 'L')
+            }
+            else {
+              next( r, c, '#')
+            }
+          }
+        }
+      }
+    }
+    
+    val end = Instant.now()
+    val d = Duration.between(start,end)
+    println( d.toMillis )
+
+    next
+  }
+
+  def calcNextGrid2o(grid: Grid) : Grid = {
+
+    val next = new Grid( grid.rows, grid.cols )
+
+    for( r <- 0 until grid.rows ) {
+      for( c <- 0 until grid.cols ) {
+
+        val alldirs = List( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
+        val allSeen = alldirs.map( grid.firstInDir( r, c, _ ) ).flatten
+
+        grid( r, c ) match {
+          case n : '.' => {
+            next( r, c, n)
+          }
+          case 'L' => {
+            if( allSeen.filter( _ == '#').size == 0 ){
+              next( r, c, '#')
+            }
+            else {
+              next( r, c, 'L')
+            }
+
+          }
+          case '#' => {
+            if( allSeen.filter( _ == '#' ).size >= 5  ){
               next( r, c, 'L')
             }
             else {
