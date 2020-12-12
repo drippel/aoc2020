@@ -2,23 +2,6 @@ package com.pfs.advent.grid
 
 import scala.collection.immutable.ListSet
 
-abstract class Dir( val row : Int, val col : Int )
-case class East() extends Dir( 0, 1 )
-case class West() extends Dir( 0, -1 )
-case class North() extends Dir( -1, 0 )
-case class South() extends Dir( 1, 0 )
-
-case class NorthEast() extends Dir( -1, 1 )
-case class SouthEast() extends Dir( 1, 1 )
-case class NorthWest() extends Dir( -1, -1 )
-case class SouthWest() extends Dir( 1, -1 )
-
-val Dirs = Set( East(), West(), North(), South() )
-val AllDirs = Set( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
-
-case class Pos( val row : Int, col : Int )
-
-case class Path( steps : ListSet[Pos] )
 
 class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
   
@@ -44,9 +27,9 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
 
   def apply( r : Int, c : Int, ch : Char ) = cells(r)(c) = ch
 
-  def apply( pos : Pos ) = cells(pos.row)(pos.col)
+  def apply( pos : Grid.Pos ) = cells(pos.row)(pos.col)
 
-  def apply( pos : Pos, ch : Char ) = cells(pos.row)(pos.col) = ch
+  def apply( pos : Grid.Pos, ch : Char ) = cells(pos.row)(pos.col) = ch
   
   def charAt( r : Int, c : Int ) : Option[Char] = {
     if( r < 0 || r >= rows || c < 0 || c >= cols ) {
@@ -59,19 +42,15 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
   
   def adjacentChars( r : Int, c : Int, all : Boolean = true ) : List[Char] = {
     
-    val ds = if( all ) { 
-      List( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
-    } else {
-      List( East(), West(), North(), South() )
-    }
+    val ds = if( all ) {   Grid.AllDirs } else { Grid.Dirs }
     
-    val coords = ds.map( d => Grid.add( d, (r,c)))
+    val coords = ds.map( d => Grid.add( d, (r,c))).toList
     
     coords.map( p => charAt(p._1, p._2)).flatten
     
   }
   
-  def getAllInDir( rs : Int, cs : Int, dir : Dir ) : List[Char] = {
+  def getAllInDir( rs : Int, cs : Int, dir : Grid.Dir ) : List[Char] = {
     
     def innerGetAllInDir( r : Int, c : Int, accum : List[Char] ) : List[Char] = {
       
@@ -85,7 +64,7 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
     innerGetAllInDir( rs + dir.row, cs + dir.col, List() )
   }
 
-  def firstInDir( rs : Int, cs : Int, dir : Dir, ec : Char = '.' ) : Option[Char] = {
+  def firstInDir( rs : Int, cs : Int, dir : Grid.Dir, ec : Char = '.' ) : Option[Char] = {
 
     def innerFirstInDir( r : Int, c : Int, found : Option[Char] ) : Option[Char] = {
 
@@ -107,6 +86,24 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
 
 
 object Grid {
+
+  abstract class Dir( val row : Int, val col : Int )
+  case class East() extends Dir( 0, 1 )
+  case class West() extends Dir( 0, -1 )
+  case class North() extends Dir( -1, 0 )
+  case class South() extends Dir( 1, 0 )
+
+  case class NorthEast() extends Dir( -1, 1 )
+  case class SouthEast() extends Dir( 1, 1 )
+  case class NorthWest() extends Dir( -1, -1 )
+  case class SouthWest() extends Dir( 1, -1 )
+
+  val Dirs = Set[Dir]( East(), West(), North(), South() )
+  val AllDirs = Set[Dir]( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
+
+  case class Pos( val row : Int, col : Int )
+
+  case class Path( steps : ListSet[Pos] )
   
   def add( dir : Dir, pos : (Int,Int) ) : (Int,Int) = { ( pos._1 + dir.row, pos._2 + dir.col) }
 

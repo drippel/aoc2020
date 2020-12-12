@@ -1,6 +1,6 @@
 package com.pfs.advent
 
-import com.pfs.advent.grid.{East, Grid, North, NorthEast, NorthWest, South, SouthEast, SouthWest, West}
+import com.pfs.advent.grid.Grid
 
 import java.time.{Duration, Instant}
 
@@ -121,7 +121,7 @@ object Day11 {
       for( c <- 0 until grid.cols ) {
         
         val adj = grid.adjacentChars( r, c, true )
-        val alldirs = List( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
+        val alldirs = Grid.AllDirs.toList 
         val allSeen = alldirs.map( grid.getAllInDir( r, c, _ ))
         val removedFloor = allSeen.filter( !_.isEmpty ).map( _.filter( s => s != '.' ))
         val firstSeen = removedFloor.map( _.headOption ).flatten
@@ -167,7 +167,7 @@ object Day11 {
     for( r <- 0 until grid.rows ) {
       for( c <- 0 until grid.cols ) {
 
-        val alldirs = List( East(), West(), North(), South(), NorthEast(), SouthEast(), SouthWest(), NorthWest() )
+        val alldirs = Grid.AllDirs.toList
         val allSeen = alldirs.map( grid.firstInDir( r, c, _ ) ).flatten
 
         grid( r, c ) match {
