@@ -125,7 +125,7 @@ object Day12 {
       }
       else {
         val step = steps.head
-        println(step)
+        // println(step)
         val (nextShip, nextWaypoint) = step(0) match {
           case 'N' => { (ship, (waypoint._1 - step.substring(1).toInt, waypoint._2)) }
           case 'S' => { (ship, (waypoint._1 + step.substring(1).toInt, waypoint._2)) }
@@ -133,35 +133,27 @@ object Day12 {
           case 'W' => { (ship, (waypoint._1,                           waypoint._2 - step.substring(1).toInt)) }
           case 'L' => {
             val nw = step.substring(1) match {
-              case "90" => { ( waypoint._2 * -1, waypoint._1 * 1 ) }
-              case "180" => { ( waypoint._1 * -1, waypoint._2 * -1 ) }
-              case "270" => { ( waypoint._2 * 1, waypoint._1 * -1 ) }
+              case "90" => { ( -waypoint._2, waypoint._1 ) }
+              case "180" => { ( -waypoint._1, -waypoint._2 ) }
+              case "270" => { ( waypoint._2, -waypoint._1 ) }
             }
             (ship,nw)
           }
           case 'R' => {
             val nw = step.substring(1) match {
-              case "90" =>  { ( waypoint._2 * 1, waypoint._1 * -1 ) }
-              case "180" => { ( waypoint._1 * -1, waypoint._2 * -1  ) }
-              case "270" => { ( waypoint._2 * -1,  waypoint._1 * 1 ) }
+              case "90" =>  { ( waypoint._2,  -waypoint._1 ) }
+              case "180" => { ( -waypoint._1, -waypoint._2 ) }
+              case "270" => { ( -waypoint._2, waypoint._1 ) }
             }
             (ship, nw)
           }
           case 'F' => {
-            // calc the rel pos of the way point
-            var ns = ship
             val t = step.substring(1).toInt
-            for( i <- 0 until t ) {
-              ns = (ns._1 + waypoint._1, ns._2 + waypoint._2)
-            }
+            val ns = (ship._1 + ( waypoint._1 * t), ship._2 + ( waypoint._2 * t ))
             (ns,waypoint)
           }
         }
         
-        println( s"was: ${ship}, ${waypoint} ")
-        println( s"next: ${nextShip}, ${nextWaypoint} ")
-        println( "")
-
         innerPart2( steps.tail, nextShip, nextWaypoint )
       }
     }
