@@ -105,7 +105,9 @@ object Grid {
 
   case class Path( steps : ListSet[Pos] )
   
-  def add( dir : Dir, pos : (Int,Int) ) : (Int,Int) = { ( pos._1 + dir.row, pos._2 + dir.col) }
+  def add( dir : Dir, pos : (Int,Int), scale : Int = 1 ) : (Int,Int) = {
+    ( pos._1 + ( dir.row * scale ), pos._2 + ( dir.col * scale ) ) 
+  }
 
   def main(args: Array[String]): Unit =
     Console.out.println("grid...")

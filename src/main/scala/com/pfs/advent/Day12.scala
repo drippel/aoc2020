@@ -1,5 +1,6 @@
 package com.pfs.advent
 
+import com.pfs.advent.grid.Grid
 import com.pfs.advent.grid.Grid.{Dir, East, North, South, West}
 
 object Day12 {
@@ -13,107 +14,65 @@ object Day12 {
     // lr.foreach(Console.out.println(_))
     // val degs = lr.map( l => l.substring(1)).toSet
     // degs.foreach(Console.out.println(_))
-    
+
     val end = part1(ls)
-    println( manahattan( (0,0), (end._2,end._3)))
+    println( manahattan( (0,0), (end._1,end._2)))
 
 
-    val p2 = part2(ls)
-    println(p2)
-    println( manahattan( (0,0), p2 ))
+    // val p2 = part2(ls)
+    // println(p2)
+    // println( manahattan( (0,0), p2 ))
   }
   
   def manahattan( start : (Int,Int), end : (Int,Int) ) : Int = {
     Math.abs( start._1 - end._1 ) + Math.abs( start._2 - end._2 ) 
   }
   
-  def part1( ls : List[String] ) : (Dir,Int,Int) = {
-    
-    val start = (East(), 0, 0)
-    
-    def innerPart1( steps : List[String], current : (Dir,Int,Int) ) : (Dir,Int,Int) = {
+  val dirAdds = Map( ( 'N' -> North() ), ('S' -> South()), ('E' -> East() ), ( 'W' -> West() ) )
+  
+  val lefts = Map( ( North() -> West() ), ( South() -> East() ), ( East() -> North() ), ( West() -> South() ))
+  val rights = Map( ( North() -> East() ), ( South() -> West() ), ( East() -> South() ), ( West() -> North() ))
+  
+  def left( start : Dir, times : Int ) : Dir = {
+    if( times == 0 ) {
+      start
+    }
+    else {
+      left( lefts(start), times - 1)
+    }
+  }
+  
+  def right( start : Dir, times : Int ) : Dir = {
+    if( times == 0 ) {
+      start
+    }
+    else {
+      right( rights(start), times - 1)
+    }
+  }
+  
+  def part1( ls : List[String] ) : (Int,Int) = {
+
+
+    def innerPart1o( steps : List[String], cdir : Dir, cpos : (Int,Int) ) : (Int,Int) = {
       if( steps.isEmpty ) {
-        current
+        cpos
       }
       else {
         val step = steps.head
-        val nextPos = step(0) match {
-          case 'N' => { ( current._1, current._2 - step.substring(1).toInt, current._3) }
-          case 'S' => { ( current._1, current._2 + step.substring(1).toInt, current._3) }
-          case 'E' => { ( current._1, current._2,                           current._3 + step.substring(1).toInt ) }
-          case 'W' => { ( current._1, current._2,                           current._3 - step.substring(1).toInt ) }
-          case 'L' => {
-            step.substring(1) match {
-              case "90" => {
-                current._1 match {
-                  case North() => {(West(), current._2, current._3)}
-                  case South() => {(East(), current._2, current._3)}
-                  case East() =>  {(North(), current._2, current._3)}
-                  case West() =>  {(South(), current._2, current._3)}
-                }
-              }
-              case "180" => {
-                current._1 match {
-                  case North() => {(South(), current._2, current._3)}
-                  case South() => {(North(), current._2, current._3)}
-                  case East() =>  {(West(), current._2, current._3)}
-                  case West() =>  {(East(), current._2, current._3)}
-                }
-              }
-              case "270" => {
-                current._1 match {
-                  case North() => {(East(), current._2, current._3)}
-                  case South() => {(West(), current._2, current._3)}
-                  case East() =>  {(South(), current._2, current._3)}
-                  case West() =>  {(North(), current._2, current._3)}
-                }
-              }
-            }
-          }
-          case 'R' => {
-            step.substring(1) match {
-              case "90" => {
-                current._1 match {
-                  case North() => {(East(), current._2, current._3)}
-                  case South() => {(West(), current._2, current._3)}
-                  case East() =>  {(South(), current._2, current._3)}
-                  case West() =>  {(North(), current._2, current._3)}
-                }
-              }
-              case "180" => {
-                current._1 match {
-                  case North() => {(South(), current._2, current._3)}
-                  case South() => {(North(), current._2, current._3)}
-                  case East() =>  {(West(), current._2, current._3)}
-                  case West() =>  {(East(), current._2, current._3)}
-                }
-              }
-              case "270" => {
-                current._1 match {
-                  case North() => {(West(), current._2, current._3)}
-                  case South() => {(East(), current._2, current._3)}
-                  case East() =>  {(North(), current._2, current._3)}
-                  case West() =>  {(South(), current._2, current._3)}
-                }
-              }
-            }
-          }
-          case 'F' => {
-            current._1 match {
-              case North() => { ( current._1, current._2 - step.substring(1).toInt, current._3) }
-              case South() => { ( current._1, current._2 + step.substring(1).toInt, current._3) }
-              case East() => { (  current._1, current._2,                           current._3 + step.substring(1).toInt ) }
-              case West() => { (  current._1, current._2,                           current._3 - step.substring(1).toInt ) }
-            }
-          }
+        val (nextDir,nextPos) = step(0) match {
+          case ( 'N' | 'S' | 'E' | 'W' ) => { ( cdir, Grid.add( dirAdds(step(0)), cpos, step.substring(1).toInt ) ) }
+          case 'L' => { ( left( cdir, step.substring(1).toInt / 90 ), cpos ) }
+          case 'R' => { ( right( cdir, step.substring(1).toInt / 90 ), cpos ) }
+          case 'F' => { ( cdir, Grid.add( cdir, cpos, step.substring(1).toInt ) ) }
         }
-        
-        innerPart1( steps.tail, nextPos )
+
+        innerPart1o( steps.tail, nextDir, nextPos )
       }
     }
-    
-    innerPart1( ls, start)
-    
+
+    innerPart1o( ls, East(), (0,0) )
+
   }
 
   def part2( ls : List[String] ) : (Int,Int) = {
