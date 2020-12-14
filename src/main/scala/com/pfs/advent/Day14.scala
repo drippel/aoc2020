@@ -69,10 +69,12 @@ object Day14 {
   }
   
   def part2( input : List[String] ) = {
+    
+    val memory = mutable.HashMap[Long,String]()
 
-    def innerPart2( lines : List[String], mask : String, accum : Map[Long,Long] ) : Map[Long,Long] = {
+    def innerPart2( lines : List[String], mask : String ) : Unit = {
       if( lines.isEmpty ) {
-        accum
+        "done"
       }
       else {
         
@@ -85,27 +87,23 @@ object Day14 {
         }
         else { mask }
 
-        val nextAccum = if( step.startsWith("mem")) {
+        if( step.startsWith("mem")) {
           val ps = step.split('=').toList.map( _.trim )
           val data = ps(1)
           val ps2 = ps(0).split('[').toList.map( _.trim )
           val loc = ps2(1).replace(']', ' ').trim.toInt
           
           val locs = decodeMemoryAddress( nextMask, loc )
-          val na = mutable.HashMap[Long,Long]()
-          na ++= accum
-          locs.foreach( l => na(l) = data.toLong ) 
-          na.toMap
+          locs.foreach( l => memory(l) = data ) 
         }
-        else { accum }
         
-        innerPart2(lines.tail, nextMask, nextAccum )
+        innerPart2(lines.tail, nextMask )
         
       }
     }
 
-    val res = innerPart2(input, toBits(0), Map() )
-    val is = res.values  
+    innerPart2(input, toBits(0) )
+    val is = memory.values.map( _.toLong )  
     val sum = is.fold(0L)( _ + _ )
     println(sum)
   }
