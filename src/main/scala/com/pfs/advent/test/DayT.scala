@@ -4,6 +4,7 @@ object DayT {
 
   def main(args: Array[String]): Unit = {
     // day08 - last CPU
+    // day12 - grid enhancements
     Console.out.println("2020 T...")
     val ls = toLines(input)
     ls.foreach(Console.out.println(_))
