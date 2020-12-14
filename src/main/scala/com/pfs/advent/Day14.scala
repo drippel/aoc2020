@@ -1,5 +1,8 @@
 package com.pfs.advent
 
+import com.pfs.advent.utils.AOC
+import com.pfs.advent.utils.AOC.iTobs
+
 import java.time.{Duration, Instant}
 import scala.collection.mutable
 
@@ -10,23 +13,9 @@ object Day14 {
     // day12 - grid enhancements
     Console.out.println("2020 14...")
     val ls = toLines(input)
-    // ls.foreach(Console.out.println(_))
     
-    /*
-    var i = 7
-    println( i.toBinaryString )
-    println( toBits( i ) )
-    
-    i = 8
-    println( i.toBinaryString )
-    println( toBits( i ) )
-    */
-    
-    // part1(ls)
-    val start = Instant.now()
-    part2(ls)
-    val end = Instant.now()
-    println( Duration.between(start,end).toMillis)
+    AOC.timeIt( () => { part1(ls) } )
+    AOC.timeIt( () => { part2(ls) } )
     
   }
   
@@ -39,7 +28,6 @@ object Day14 {
       }
       else {
         val step = lines.head
-        println(mask)
         val nextMask = if( step.startsWith("mask")) {
           val ps = step.split('=').toList.map( _.trim ) 
           ps(1)
@@ -51,8 +39,7 @@ object Day14 {
           val data = ps(1)
           val ps2 = ps(0).split('[').toList.map( _.trim ) 
           val loc = ps2(1).replace(']', ' ').trim.toInt
-          println( s"writing ${data} to ${loc}")
-          val res = applyBitMask( nextMask, toBits( data.toInt ) )
+          val res = applyBitMask( nextMask, iTobs( data.toInt, 36 ) )
           accum + ( loc -> res )
 
         }
@@ -62,7 +49,7 @@ object Day14 {
       }
     }
     
-    val res = innerPart1(input, toBits(0), Map())
+    val res = innerPart1(input, iTobs(0,36), Map())
     val is = res.map( kv => { java.lang.Long.parseLong( kv._2, 2 ) } ).toList
     val sum = is.fold(0L)( _ + _ )
     println(sum)
@@ -101,15 +88,15 @@ object Day14 {
         
       }
     }
-
-    innerPart2(input, toBits(0) )
+    
+    innerPart2(input, iTobs(0,36) )
     val is = memory.values.map( _.toLong )  
     val sum = is.fold(0L)( _ + _ )
     println(sum)
   }
   
   def decodeMemoryAddress( mask : String, address : Int ) : List[Long] = {
-    val bs = toBits(address)
+    val bs = iTobs(address,36)
     val wm = applyBitMask2(mask, bs)
     val exp = expandAddress(wm)
     exp.map( s => java.lang.Long.parseLong( s, 2 ) )
@@ -162,12 +149,6 @@ object Day14 {
   }
 
 
-  def toBits( i : Int ) = {
-    val s = i.toBinaryString
-    s.reverse.padTo(36,'0').reverse
-    
-  }
-  
   def applyBitMask( mask : String, src : String  ) = {
     val z = mask.zip(src)
     val res = z.map( t => {
