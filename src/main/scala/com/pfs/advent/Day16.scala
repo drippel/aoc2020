@@ -1,5 +1,10 @@
 package com.pfs.advent
 
+import com.pfs.advent.Day16.test
+
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+
 object Day16 {
 
   def main(args: Array[String]): Unit = {
@@ -7,11 +12,207 @@ object Day16 {
     // day12 - grid enhancements
     Console.out.println("2020 16...")
     val ls = toLines(input)
-    ls.foreach(Console.out.println(_))
+    // ls.foreach(Console.out.println(_))
     val (rules, yourTicket, nearby) = parse(ls)
     
-    part1( rules, nearby )
+    // part1( rules, nearby )
+    part2( rules, yourTicket.get, nearby )
     
+  }
+  
+  def part2( rules : List[Rule], yourTicket : Ticket, nearby : List[Ticket] ) = {
+
+    // take the valid tickets
+    val tv = nearby.filter( isValid( rules, _ ))
+    val valid = tv :+ yourTicket
+
+    // combine the fields into list of list
+    val flds = combineFields( valid )
+
+    // build a set of rules to remove from
+    val remainingRules = mutable.LinkedHashSet[Rule]()
+    remainingRules ++= rules
+
+    
+    // this is going to suck - go through all fields and get a set of all rules that match 
+    val fmap = mutable.HashMap[Int,Set[Rule]]()
+    for( fidx <- 0 until flds.size ) {
+      println(fidx)
+      val rs = for {
+        r <- rules
+        if flds( fidx ).forall ( f => {isValid ( r, f.toInt )} )
+      } yield r
+      fmap += ( fidx -> rs.toSet ) 
+    } 
+    println(fmap)
+    
+    
+    // now we want to keep reducing the truth tables
+    val ruleMap = mutable.HashMap[Rule,Int]()
+    
+    var found = true 
+    while( found ) {
+      
+      val singles = fmap.filter( kv => kv._2.size == 1 )
+      if( singles.isEmpty ) {
+        found = false
+      }
+      else {
+        // add to rule map
+        for( s <- singles ) {
+          ruleMap += ( s._2.head -> s._1 )
+        }
+        
+        // remove from the fmap
+        for( s <- singles ) {
+          for( kv <- fmap ) {
+            fmap(kv._1) = kv._2 - s._2.head
+          }
+        }
+      }
+    }
+
+
+    println( ruleMap )
+    
+    val deprules = rules.filter( r => r.name.startsWith("departure"))
+    // get the indices from ruleMap
+    val indices = deprules.map( r => ruleMap(r) )
+    
+    // get the values off my ticket
+    val vs = indices.map( i => yourTicket.fields(i).toLong )
+    
+    val sum = vs.foldLeft(1L)( _ * _ )
+    println(sum)
+  }
+
+  def part2b( rules : List[Rule], yourTicket : Ticket, nearby : List[Ticket] ) = {
+
+    // take the valid tickets
+    val tv = nearby.filter( isValid( rules, _ ))
+    val valid = tv :+ yourTicket
+    
+    // combine the fields into list of list
+    val flds = combineFields( valid )
+    
+    // build a set of rules to remove from
+    val remainingRules = mutable.LinkedHashSet[Rule]()
+    remainingRules ++= rules
+    
+    val ruleMap = mutable.HashMap[Rule,Int]()
+
+    // now go through each field and see which rule matches first
+    for( idx <- 0 until flds.size ) {
+      remainingRules.find( r => { allGood( r, flds(idx)) }) match {
+        case Some(r) => {
+          println( s"${r} is field: ${idx}")
+          ruleMap += ( r -> idx )
+          remainingRules -= r
+        }
+        case None => println("no match")
+      }
+    }
+    
+    println(ruleMap)
+    println(remainingRules)
+    
+    val deps = rules.filter( r => r.name.startsWith("departure"))
+    println(deps)
+    
+    val indexes = deps.map( ruleMap(_))
+    val ytflds = indexes.map( yourTicket.fields(_)).map( _.toLong )
+    println(ytflds)
+    
+    val p = ytflds.foldRight(1L)( _ * _ )
+    println(p)
+    
+    
+    
+    
+  }
+  
+  def combineFields( tickets : List[Ticket] ) : List[List[String]] = {
+    
+    def innerCombine( ts : List[Ticket], accum : List[List[String]] ) : List[List[String]] = {
+      
+      if( ts.isEmpty ){
+        accum
+      }
+      else {
+        val h = ts.head
+        val z = accum.zip( h.fields )
+        val na = z.map( t => t._1 :+ t._2 )
+        innerCombine(ts.tail, na )
+      }
+      
+    }
+    
+    innerCombine(tickets.tail, tickets.head.fields.map( List(_)) )
+  }
+  
+  
+  def part2bad( rules : List[Rule], yourTicket : Ticket, nearby : List[Ticket] ) = {
+    
+    val valid = nearby.filter( isValid( rules, _ ))
+    println(valid)
+    
+    // combine all the fields 
+    val combined = mutable.HashMap[Int,List[String]]()
+    
+    for( idx <- 0 until yourTicket.fields.size ) {
+      combined += ( idx -> fields(idx,valid))
+    }
+    
+    val remainingRules = mutable.LinkedHashSet[Rule]()
+    remainingRules ++= rules
+    
+    val ruleMap = mutable.HashMap[Int,Rule]()
+    val revRuleMap = mutable.HashMap[Rule,Int]()
+    
+    for( idx <- 0 until yourTicket.fields.size ) {
+      
+      val fs = combined(idx)
+      
+      remainingRules.find( r => { allGood( r, fs ) } ) match {
+        case Some(r) => {
+          ruleMap += (idx -> r)
+          revRuleMap += (r -> idx)
+          remainingRules -= r
+        }
+        case None => {
+          println ("wtf")
+        }
+      }
+      
+    }
+    
+    println(ruleMap)
+    
+    if( !remainingRules.isEmpty ) {
+      println("double wtf")
+      println(remainingRules)
+    }
+    
+    var m = 1L
+    val depRules = rules.filter( _.name.startsWith("departure"))
+    for( d <- depRules ) {
+      println( s"${d.name} ${revRuleMap(d)}")
+      val x = revRuleMap(d)
+      val yt = yourTicket.fields(x)
+      println(m)
+      println(yt)
+      m = yt.toInt * m
+    }
+    println(m)
+    
+  }
+  
+  def allGood( rule : Rule, flds : List[String] ) : Boolean = { flds.forall( f => isValid( rule, f.toInt )) }
+  
+  def fields( idx : Int, ts : List[Ticket] ): List[String] = {
+    for{
+      t <- ts
+    } yield t.fields(idx)
   }
   
   def part1( rules : List[Rule], tickets : List[Ticket] ) = {
@@ -19,8 +220,17 @@ object Day16 {
     val res = tickets.map( validate( rules, _ ))
     println(res)
     val is = res.flatten.map( _.toInt )
+    println(is.size)
     val sum = is.foldLeft(0)( _ + _ )
     println(sum)
+  }
+  
+  def isValid( rules : List[Rule], ticket : Ticket ) : Boolean = {
+    val fo = ticket.fields.find( f => {
+      val ro = rules.find( r => {isValid( r, f.toInt ) } )
+      !ro.isDefined
+    })
+    fo.isEmpty
   }
   
   def validate( rules : List[Rule], ticket : Ticket ) = {
@@ -116,6 +326,19 @@ object Day16 {
       40,4,50
       55,2,20
       38,6,12"""
+      
+  val test1 =
+    """class: 0-1 or 4-19
+      row: 0-5 or 8-19
+      seat: 0-13 or 16-19
+      
+      your ticket:
+      11,12,13
+      
+      nearby tickets:
+      3,9,18
+      15,1,5
+      5,14,9"""
   
   val input =
     """departure location: 42-570 or 579-960
