@@ -1,6 +1,7 @@
 package com.pfs.advent
 
 import com.pfs.advent.Day16.test
+import com.pfs.advent.utils.AOC
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -16,7 +17,9 @@ object Day16 {
     val (rules, yourTicket, nearby) = parse(ls)
     
     // part1( rules, nearby )
-    part2( rules, yourTicket.get, nearby )
+    AOC.timeIt( () => {
+      part2( rules, yourTicket.get, nearby )
+    })
     
   }
   
@@ -30,56 +33,56 @@ object Day16 {
     val flds = combineFields( valid )
 
     // go through all fields and get a set of all rules that match each field 
-    val fmap = mutable.HashMap[Int,Set[Rule]]()
+    val fieldToRule = mutable.HashMap[Int,Set[Rule]]()
     for( fidx <- 0 until flds.size ) {
       val rs = for {
         r <- rules
         if flds( fidx ).forall ( f => {isValid ( r, f.toInt )} )
       } yield r
-      fmap += ( fidx -> rs.toSet ) 
+      fieldToRule += ( fidx -> rs.toSet ) 
     } 
-    println(fmap)
+    println(fieldToRule)
     
     
     // could be a recursive function
-    // now we want to keep reducing the truth tables
+    // now we want to keep reducing the field to rule sets
     var pass = 0
-    val ruleMap = mutable.HashMap[Rule,Int]()
+    val ruleToField = mutable.HashMap[Rule,Int]()
     var found = true 
     while( found ) {
       
       println(s"reduce pass ${pass}")
       pass = pass + 1
-      printMap(fmap.toMap)
+      printMap(fieldToRule.toMap)
       
-      val singles = fmap.filter( kv => kv._2.size == 1 )
+      val singles = fieldToRule.filter( kv => kv._2.size == 1 )
       if( singles.isEmpty ) {
         found = false
       }
       else {
-        // add to rule map
+        // add to ruleToField map
         for( s <- singles ) {
           println( s"${s._2.head.name} has one solution: ${ s._1 }" )
-          ruleMap += ( s._2.head -> s._1 )
+          ruleToField += ( s._2.head -> s._1 )
         }
         
-        // remove from the fmap
+        // remove from the fieldToRule map
         for( s <- singles ) {
-          for( kv <- fmap ) {
-            fmap(kv._1) = kv._2 - s._2.head
+          for( kv <- fieldToRule ) {
+            fieldToRule(kv._1) = kv._2 - s._2.head
           }
         }
       }
     }
 
 
-    println( ruleMap )
+    println( ruleToField )
     
     // get the departure fields
     val deprules = rules.filter( r => r.name.startsWith("departure"))
     
     // get the indices from ruleMap
-    val indices = deprules.map( r => ruleMap(r) )
+    val indices = deprules.map( r => ruleToField(r) )
     
     // get the values off my ticket
     val vs = indices.map( i => yourTicket.fields(i).toLong )
@@ -117,16 +120,7 @@ object Day16 {
   }
   
   
-  def allGood( rule : Rule, flds : List[String] ) : Boolean = { flds.forall( f => isValid( rule, f.toInt )) }
-  
-  def fields( idx : Int, ts : List[Ticket] ): List[String] = {
-    for{
-      t <- ts
-    } yield t.fields(idx)
-  }
-  
   def part1( rules : List[Rule], tickets : List[Ticket] ) = {
-    
     val res = tickets.map( validate( rules, _ ))
     println(res)
     val is = res.flatten.map( _.toInt )
