@@ -62,15 +62,17 @@ object Day16 {
       else {
         // add to ruleToField map
         for( s <- singles ) {
+          
           println( s"${s._2.head.name} has one solution: ${ s._1 }" )
+          
           ruleToField += ( s._2.head -> s._1 )
-        }
+          fieldToRule.remove(s._1)
         
-        // remove from the fieldToRule map
-        for( s <- singles ) {
+          // mapValuesInPlace
           for( kv <- fieldToRule ) {
             fieldToRule(kv._1) = kv._2 - s._2.head
           }
+          
         }
       }
     }
@@ -81,14 +83,19 @@ object Day16 {
     // get the departure fields
     val deprules = rules.filter( r => r.name.startsWith("departure"))
     
-    // get the indices from ruleMap
+    // get the indices from ruleToField map
     val indices = deprules.map( r => ruleToField(r) )
     
-    // get the values off my ticket
+    // get the values from your ticket
     val vs = indices.map( i => yourTicket.fields(i).toLong )
     
     val sum = vs.foldLeft(1L)( _ * _ )
     println(sum)
+    
+    for( r <- ruleToField ) {
+      val s = yourTicket.fields(r._2)
+      println( s"${r._1.name} : ${s}")
+    }
   }
   
   def printMap( fmap : Map[Int,Set[Rule]]) = {
