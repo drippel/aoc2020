@@ -12,9 +12,7 @@ object Day17 {
     val ls = toLines(input)
     ls.foreach(Console.out.println(_))
     
-    // part1(ls)
-    println(genCoords(4))
-    println(genCoords(4).size)
+    part1(ls)
     
   }
   
@@ -39,21 +37,10 @@ object Day17 {
       
     }
     
-    innerGen( dims - 1, List( List(0), List(1), List(-1)))
+    val res = innerGen( dims - 1, List( List(0), List(1), List(-1)))
+    res.filterNot( l => l.forall( _ == 0 ) )
     
   }
-  
-  // one layer              N              NE             E             SE            S             SW             W              NW
-  val allNeighbors = List(  ( -1, 0,  0, 0 ), ( -1, 1,  0, 0 ), ( 0, 1,  0, 0 ), ( 1, 1,  0, 0 ), (1, 0,  0, 0 ), ( 1, -1,  0, 0 ), ( 0, -1,  0, 0 ), ( -1, -1,  0, 0 ),
-                            ( -1, 0, -1, 0 ), ( -1, 1, -1, 0 ), ( 0, 1, -1, 0 ), ( 1, 1, -1, 0 ), (1, 0, -1, 0 ), ( 1, -1, -1, 0 ), ( 0, -1, -1, 0 ), ( -1, -1, -1, 0 ), ( 0, 0, -1, 0 ),
-                            ( -1, 0,  1, 0 ), ( -1, 1,  1, 0 ), ( 0, 1,  1, 0 ), ( 1, 1,  1, 0 ), (1, 0,  1, 0 ), ( 1, -1,  1, 0),  ( 0, -1,  1, 0 ), ( -1, -1,  1, 0 ), ( 0, 0,  1, 0 ), 
-                            ( -1, 0,  0, 1 ), ( -1, 1,  0, 1 ), ( 0, 1,  0, 1 ), ( 1, 1,  0, 1 ), (1, 0,  0, 1 ), ( 1, -1,  0, 1 ), ( 0, -1,  0, 1 ), ( -1, -1,  0, 1 ),
-                            ( -1, 0, -1, 1 ), ( -1, 1, -1, 1 ), ( 0, 1, -1, 1 ), ( 1, 1, -1, 1 ), (1, 0, -1, 1 ), ( 1, -1, -1, 1 ), ( 0, -1, -1, 1 ), ( -1, -1, -1, 1 ), ( 0, 0, -1, 1 ),
-                            ( -1, 0,  1, 1 ), ( -1, 1,  1, 1 ), ( 0, 1,  1, 1 ), ( 1, 1,  1, 1 ), (1, 0,  1, 1 ), ( 1, -1,  1, 1),  ( 0, -1,  1, 1 ), ( -1, -1,  1, 1 ), ( 0, 0,  1, 1 ), 
-                            ( -1, 0,  0, -1 ), ( -1, 1,  0, -1 ), ( 0, 1,  0, -1 ), ( 1, 1,  0, -1 ), (1, 0,  0, -1 ), ( 1, -1,  0, -1 ), ( 0, -1,  0, -1 ), ( -1, -1,  0, -1 ),
-                            ( -1, 0, -1, -1 ), ( -1, 1, -1, -1 ), ( 0, 1, -1, -1 ), ( 1, 1, -1, -1 ), (1, 0, -1, -1 ), ( 1, -1, -1, -1 ), ( 0, -1, -1, -1 ), ( -1, -1, -1, -1 ), ( 0, 0, -1, -1 ),
-                            ( -1, 0,  1, -1 ), ( -1, 1,  1, -1 ), ( 0, 1,  1, -1 ), ( 1, 1,  1, -1 ), (1, 0,  1, -1 ), ( 1, -1,  1, -1),  ( 0, -1,  1, -1 ), ( -1, -1,  1, -1 ), ( 0, 0,  1, -1 ), 
-                            ( 0, 0, 0, -1 ), ( 0, 0, 0, 1 ) )
   
   val ACTIVE = '#'
   val INACTIVE = '.'
@@ -66,11 +53,12 @@ object Day17 {
     val start = parse(ls)
     println(start)
 
-
     val noOfDims = start.head._1.size
     var state = start
     println("t = 0")
     printCube(state)
+    val genNieghbors = genCoords(noOfDims)
+    println(genNieghbors)
 
     for( cycle <- 0 until limit ) {
 
@@ -83,26 +71,30 @@ object Day17 {
       // this is our accum for the dimloop
       val nextState = mutable.HashMap[List[Int],Char]()
       
-      def dimLoop( currentCoords : List[Int] ) = {
+      def dimLoop( currentCoords : List[Int] ) : Unit = {
         
         if( currentCoords.size == noOfDims ) {
           
-          // this is one to test and add to next state
-
-          // println( s"${x},${y},${z}")
-          // create blank new state
-
+          println(currentCoords)
+          
           // find all 3d neighbors
-          val ns = allNeighbors.map( t => (t._1 + x, t._2 + y, t._3 + z, t._4 + w) )
-
+          val ns = for{ 
+            n <- genNieghbors 
+            z = currentCoords.zip(n)
+            zs = z.map( t => t._1 + t._2 )
+          } yield zs 
+          
+          // println(ns)
+          
           val nss = ns.map( t => state.getOrElse( t, INACTIVE ) )
+          // println(nss)
           val activeCount = nss.count( _ == ACTIVE )
 
-          val currentState = state.getOrElse( (x, y, z, w), '.' )
+          val currentState = state.getOrElse( currentCoords, '.' )
 
           if( currentState == ACTIVE ) {
             if( activeCount == 2 || activeCount == 3 ) {
-              nextState( (x, y, z, w) ) = ACTIVE
+              nextState( currentCoords ) = ACTIVE
             }
             else {
               // INACTIVE - don't add to map
@@ -111,7 +103,7 @@ object Day17 {
 
           if( currentState == INACTIVE ) {
             if( activeCount == 3 ) {
-              nextState( (x, y, z, w) ) = ACTIVE
+              nextState( currentCoords ) = ACTIVE
             }
             else {
               // INACTIVE
@@ -124,16 +116,24 @@ object Day17 {
           val currDim = currentCoords.size
           val nextDim = currDim 
           // the starting value for this dim is
-          val dimStart = min(nextDim)
-          val dimEnd = max(nextDim) + 1
+          val dimStart = min(nextDim) - offset
+          val dimEnd = max(nextDim) + offset
+          // println( s"${nextDim} ${dimStart} ${dimEnd}")
+          for( d <- dimStart to dimEnd ) {
+            val nextCoords = currentCoords :+ d
+            dimLoop( nextCoords )
+          }
         }
       }
       
-      // state = nextState.toMap
-      printCube(state)
+      dimLoop(List())
+      
+      state = nextState.toMap
+      // printCube(state)
     }
     
-    printCube(state)
+    // printCube(state)
+    println(state)
     val factive = state.size
     println( factive )
     
