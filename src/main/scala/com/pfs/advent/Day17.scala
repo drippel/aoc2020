@@ -16,9 +16,16 @@ object Day17 {
   }
   
   // one layer              N              NE             E             SE            S             SW             W              NW
-  val allNeighbors = List(  ( -1, 0, 0 ),  ( -1, 1, 0 ),  ( 0, 1, 0 ),  ( 1, 1, 0 ),  (1, 0, 0),  ( 1, -1, 0 ),  ( 0, -1, 0 ),  ( -1, -1, 0 ),
-                            ( -1, 0, -1 ), ( -1, 1, -1 ), ( 0, 1, -1 ), ( 1, 1, -1 ), (1, 0, -1), ( 1, -1, -1 ), ( 0, -1, -1 ), ( -1, -1, -1 ), ( 0, 0, -1 ),
-                            ( -1, 0,  1 ), ( -1, 1,  1 ), ( 0, 1,  1 ), ( 1, 1,  1 ), (1, 0,  1), ( 1, -1,  1 ), ( 0, -1,  1 ), ( -1, -1,  1 ), ( 0, 0,  1) )
+  val allNeighbors = List(  ( -1, 0,  0, 0 ), ( -1, 1,  0, 0 ), ( 0, 1,  0, 0 ), ( 1, 1,  0, 0 ), (1, 0,  0, 0 ), ( 1, -1,  0, 0 ), ( 0, -1,  0, 0 ), ( -1, -1,  0, 0 ),
+                            ( -1, 0, -1, 0 ), ( -1, 1, -1, 0 ), ( 0, 1, -1, 0 ), ( 1, 1, -1, 0 ), (1, 0, -1, 0 ), ( 1, -1, -1, 0 ), ( 0, -1, -1, 0 ), ( -1, -1, -1, 0 ), ( 0, 0, -1, 0 ),
+                            ( -1, 0,  1, 0 ), ( -1, 1,  1, 0 ), ( 0, 1,  1, 0 ), ( 1, 1,  1, 0 ), (1, 0,  1, 0 ), ( 1, -1,  1, 0),  ( 0, -1,  1, 0 ), ( -1, -1,  1, 0 ), ( 0, 0,  1, 0 ), 
+                            ( -1, 0,  0, 1 ), ( -1, 1,  0, 1 ), ( 0, 1,  0, 1 ), ( 1, 1,  0, 1 ), (1, 0,  0, 1 ), ( 1, -1,  0, 1 ), ( 0, -1,  0, 1 ), ( -1, -1,  0, 1 ),
+                            ( -1, 0, -1, 1 ), ( -1, 1, -1, 1 ), ( 0, 1, -1, 1 ), ( 1, 1, -1, 1 ), (1, 0, -1, 1 ), ( 1, -1, -1, 1 ), ( 0, -1, -1, 1 ), ( -1, -1, -1, 1 ), ( 0, 0, -1, 1 ),
+                            ( -1, 0,  1, 1 ), ( -1, 1,  1, 1 ), ( 0, 1,  1, 1 ), ( 1, 1,  1, 1 ), (1, 0,  1, 1 ), ( 1, -1,  1, 1),  ( 0, -1,  1, 1 ), ( -1, -1,  1, 1 ), ( 0, 0,  1, 1 ), 
+                            ( -1, 0,  0, -1 ), ( -1, 1,  0, -1 ), ( 0, 1,  0, -1 ), ( 1, 1,  0, -1 ), (1, 0,  0, -1 ), ( 1, -1,  0, -1 ), ( 0, -1,  0, -1 ), ( -1, -1,  0, -1 ),
+                            ( -1, 0, -1, -1 ), ( -1, 1, -1, -1 ), ( 0, 1, -1, -1 ), ( 1, 1, -1, -1 ), (1, 0, -1, -1 ), ( 1, -1, -1, -1 ), ( 0, -1, -1, -1 ), ( -1, -1, -1, -1 ), ( 0, 0, -1, -1 ),
+                            ( -1, 0,  1, -1 ), ( -1, 1,  1, -1 ), ( 0, 1,  1, -1 ), ( 1, 1,  1, -1 ), (1, 0,  1, -1 ), ( 1, -1,  1, -1),  ( 0, -1,  1, -1 ), ( -1, -1,  1, -1 ), ( 0, 0,  1, -1 ), 
+                            ( 0, 0, 0, -1 ), ( 0, 0, 0, 1 ) )
   
   val ACTIVE = '#'
   val INACTIVE = '.'
@@ -44,7 +51,7 @@ object Day17 {
       println(s"bs = ${min} ${max}")
       val offset = cycle + 1
 
-      val nextState = mutable.HashMap[(Int,Int,Int),Char]()
+      val nextState = mutable.HashMap[(Int,Int,Int,Int),Char]()
       
       // 3d loop through that?
       for( x <- ( min._1 - offset ) to ( max._1 + offset ) ) {
@@ -54,32 +61,35 @@ object Day17 {
           // this is not right
           for( z <- ( min._3 - offset ) to ( max._3 + offset ) ) {
             
-            // println( s"${x},${y},${z}")
-            // create blank new state
+            for( w <- ( min._4 - offset ) to ( max._4 + offset ) ) {
 
-            // find all 3d neighbors
-            val ns = allNeighbors.map( t => (t._1 + x, t._2 + y, t._3 + z ) )
-            
-            val nss = ns.map( t => state.getOrElse( t, INACTIVE ) )
-            val activeCount = nss.count( _ == ACTIVE )
-            
-            val currentState = state.getOrElse( (x,y,z), '.' )
+              // println( s"${x},${y},${z}")
+              // create blank new state
 
-            if( currentState == ACTIVE ) {
-              if( activeCount == 2 || activeCount == 3 ) {
-                nextState( (x,y,z) ) = ACTIVE
-              }
-              else {
-                // INACTIVE - don't add to map
-              }
-            }
+              // find all 3d neighbors
+              val ns = allNeighbors.map( t => (t._1 + x, t._2 + y, t._3 + z, t._4 + w ) )
 
-            if( currentState == INACTIVE ) {
-              if( activeCount == 3 ) {
-                nextState( (x,y,z) ) = ACTIVE
+              val nss = ns.map( t => state.getOrElse( t, INACTIVE ) )
+              val activeCount = nss.count( _ == ACTIVE )
+
+              val currentState = state.getOrElse( (x, y, z, w), '.' )
+
+              if( currentState == ACTIVE ) {
+                if( activeCount == 2 || activeCount == 3 ) {
+                  nextState( (x, y, z, w) ) = ACTIVE
+                }
+                else {
+                  // INACTIVE - don't add to map
+                }
               }
-              else {
-                // INACTIVE
+
+              if( currentState == INACTIVE ) {
+                if( activeCount == 3 ) {
+                  nextState( (x, y, z, w) ) = ACTIVE
+                }
+                else {
+                  // INACTIVE
+                }
               }
             }
           }
@@ -97,29 +107,31 @@ object Day17 {
     noOfCubes
   }
   
-  def printCube( cube : Map[(Int,Int,Int),Char] ) = {
+  def printCube( cube : Map[(Int,Int,Int,Int),Char] ) = {
     val bounds = findBoundingBox(cube)
-    
-    for( z <- bounds._1._3 to bounds._2._3 ) {
-      println(s"layer = ${z}")
-      for( y <- bounds._1._2 to bounds._2._2 ) {
-        for( x <- bounds._1._1 to bounds._2._1 ) {
-          val c = cube.getOrElse( (x,y,z), '.')
-          print(c)
+
+    for( w <- bounds._1._4 to bounds._2._4 ) {
+      for( z <- bounds._1._3 to bounds._2._3 ) {
+        println( s"layer z= ${z} layer w= ${w}" )
+        for( y <- bounds._1._2 to bounds._2._2 ) {
+          for( x <- bounds._1._1 to bounds._2._1 ) {
+            val c = cube.getOrElse( (x, y, z, w ), '.' )
+            print( c )
+          }
+          print( "\n" )
         }
-        print("\n")
+        print( "\n" )
       }
-      print("\n")
     }
   }
   
-  def parse( ls : List[String] ) : Map[(Int,Int,Int),Char] = {
+  def parse( ls : List[String] ) : Map[(Int,Int,Int,Int),Char] = {
     
-    val res = mutable.HashMap[(Int,Int,Int),Char]()
+    val res = mutable.HashMap[(Int,Int,Int,Int),Char]()
     
     for( y <- 0 until ls.size ) {
       for( x <- 0 until ls(y).size ) {
-        res += ( (x,y,0) -> ls(y)(x) )
+        res += ( (x,y,0,0) -> ls(y)(x) )
       }
     }
     
@@ -127,23 +139,26 @@ object Day17 {
     
   }
   
-  def findBoundingBox( cube : Map[(Int,Int,Int),Char] ) = {
+  def findBoundingBox( cube : Map[(Int,Int,Int,Int),Char] ) = {
     
     val xs = cube.keys.map( t => t._1 ).toList.sorted
     val ys = cube.keys.map( t => t._2 ).toList.sorted
     val zs = cube.keys.map( t => t._3 ).toList.sorted
+    val ws = cube.keys.map( t => t._4 ).toList.sorted
     
     val (minX,maxX) = (xs.head,xs.last)
     val (minY,maxY) = (ys.head,ys.last)
     val (minZ,maxZ) = (zs.head,zs.last)
+    val (minW,maxW) = (ws.head,ws.last)
     
-    println( s"${minX},${maxX}  ${minY},${maxY}, ${minZ},${maxZ}")
+    println( s"${minX},${maxX}  ${minY},${maxY}, ${minZ},${maxZ}, ${minW},${maxW}")
     
     val (bMinX,bMaxX) = (minX - 1, maxX + 1)
     val (bMinY,bMaxY) = (minY - 1, maxY + 1)
     val (bMinZ,bMaxZ) = (minZ - 1, maxZ + 1)
+    val (bMinW,bMaxW) = (minW - 1, maxW + 1)
     
-    ((bMinX,bMinY,bMinZ),(bMaxX,bMaxY,bMaxZ))
+    ((bMinX,bMinY,bMinZ,bMinW),(bMaxX,bMaxY,bMaxZ,bMaxW))
 
   }
   
