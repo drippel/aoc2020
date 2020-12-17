@@ -1,6 +1,7 @@
 package com.pfs.advent
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object Day17 {
 
@@ -11,7 +12,34 @@ object Day17 {
     val ls = toLines(input)
     ls.foreach(Console.out.println(_))
     
-    part1(ls)
+    // part1(ls)
+    println(genCoords(4))
+    println(genCoords(4).size)
+    
+  }
+  
+  // 3 ^ 4 - 0,0,0,0
+  def genCoords( dims : Int ) : List[List[Int]] = {
+    
+    def innerGen( dim : Int, accum : List[List[Int]]  ) : List[List[Int]] = {
+      
+      if( dim <= 0 ) {
+        accum
+      }
+      else {
+        
+        val next = ListBuffer[List[Int]]() 
+        for( l <- accum ) {
+          next += l :+ 0
+          next += l :+ -1
+          next += l :+ 1 
+        }
+        innerGen( dim - 1, next.toList )
+      }
+      
+    }
+    
+    innerGen( dims - 1, List( List(0), List(1), List(-1)))
     
   }
   
@@ -37,8 +65,9 @@ object Day17 {
     
     val start = parse(ls)
     println(start)
-    
-    
+
+
+    val noOfDims = start.head._1.size
     var state = start
     println("t = 0")
     printCube(state)
@@ -51,52 +80,56 @@ object Day17 {
       println(s"bs = ${min} ${max}")
       val offset = cycle + 1
 
-      val nextState = mutable.HashMap[(Int,Int,Int,Int),Char]()
+      // this is our accum for the dimloop
+      val nextState = mutable.HashMap[List[Int],Char]()
       
-      // 3d loop through that?
-      for( x <- ( min._1 - offset ) to ( max._1 + offset ) ) {
+      def dimLoop( currentCoords : List[Int] ) = {
         
-        for( y <- ( min._2 - offset ) to ( max._2 + offset ) ) {
+        if( currentCoords.size == noOfDims ) {
+          
+          // this is one to test and add to next state
 
-          // this is not right
-          for( z <- ( min._3 - offset ) to ( max._3 + offset ) ) {
-            
-            for( w <- ( min._4 - offset ) to ( max._4 + offset ) ) {
+          // println( s"${x},${y},${z}")
+          // create blank new state
 
-              // println( s"${x},${y},${z}")
-              // create blank new state
+          // find all 3d neighbors
+          val ns = allNeighbors.map( t => (t._1 + x, t._2 + y, t._3 + z, t._4 + w) )
 
-              // find all 3d neighbors
-              val ns = allNeighbors.map( t => (t._1 + x, t._2 + y, t._3 + z, t._4 + w ) )
+          val nss = ns.map( t => state.getOrElse( t, INACTIVE ) )
+          val activeCount = nss.count( _ == ACTIVE )
 
-              val nss = ns.map( t => state.getOrElse( t, INACTIVE ) )
-              val activeCount = nss.count( _ == ACTIVE )
+          val currentState = state.getOrElse( (x, y, z, w), '.' )
 
-              val currentState = state.getOrElse( (x, y, z, w), '.' )
+          if( currentState == ACTIVE ) {
+            if( activeCount == 2 || activeCount == 3 ) {
+              nextState( (x, y, z, w) ) = ACTIVE
+            }
+            else {
+              // INACTIVE - don't add to map
+            }
+          }
 
-              if( currentState == ACTIVE ) {
-                if( activeCount == 2 || activeCount == 3 ) {
-                  nextState( (x, y, z, w) ) = ACTIVE
-                }
-                else {
-                  // INACTIVE - don't add to map
-                }
-              }
-
-              if( currentState == INACTIVE ) {
-                if( activeCount == 3 ) {
-                  nextState( (x, y, z, w) ) = ACTIVE
-                }
-                else {
-                  // INACTIVE
-                }
-              }
+          if( currentState == INACTIVE ) {
+            if( activeCount == 3 ) {
+              nextState( (x, y, z, w) ) = ACTIVE
+            }
+            else {
+              // INACTIVE
             }
           }
         }
+        else {
+          
+          // what is the size of the current input
+          val currDim = currentCoords.size
+          val nextDim = currDim 
+          // the starting value for this dim is
+          val dimStart = min(nextDim)
+          val dimEnd = max(nextDim) + 1
+        }
       }
       
-      state = nextState.toMap
+      // state = nextState.toMap
       printCube(state)
     }
     
@@ -107,31 +140,18 @@ object Day17 {
     noOfCubes
   }
   
-  def printCube( cube : Map[(Int,Int,Int,Int),Char] ) = {
+  def printCube( cube : Map[List[Int],Char] ) = {
     val bounds = findBoundingBox(cube)
-
-    for( w <- bounds._1._4 to bounds._2._4 ) {
-      for( z <- bounds._1._3 to bounds._2._3 ) {
-        println( s"layer z= ${z} layer w= ${w}" )
-        for( y <- bounds._1._2 to bounds._2._2 ) {
-          for( x <- bounds._1._1 to bounds._2._1 ) {
-            val c = cube.getOrElse( (x, y, z, w ), '.' )
-            print( c )
-          }
-          print( "\n" )
-        }
-        print( "\n" )
-      }
-    }
+    println("not yet...")
   }
   
-  def parse( ls : List[String] ) : Map[(Int,Int,Int,Int),Char] = {
+  def parse( ls : List[String] ) : Map[List[Int],Char] = {
     
-    val res = mutable.HashMap[(Int,Int,Int,Int),Char]()
+    val res = mutable.HashMap[List[Int],Char]()
     
     for( y <- 0 until ls.size ) {
       for( x <- 0 until ls(y).size ) {
-        res += ( (x,y,0,0) -> ls(y)(x) )
+        res += ( List(x,y,0,0) -> ls(y)(x) )
       }
     }
     
@@ -139,26 +159,25 @@ object Day17 {
     
   }
   
-  def findBoundingBox( cube : Map[(Int,Int,Int,Int),Char] ) = {
+  def findBoundingBox( cube : Map[List[Int],Char] ) : (List[Int],List[Int]) = {
     
-    val xs = cube.keys.map( t => t._1 ).toList.sorted
-    val ys = cube.keys.map( t => t._2 ).toList.sorted
-    val zs = cube.keys.map( t => t._3 ).toList.sorted
-    val ws = cube.keys.map( t => t._4 ).toList.sorted
+    val dims = cube.head._1.size
     
-    val (minX,maxX) = (xs.head,xs.last)
-    val (minY,maxY) = (ys.head,ys.last)
-    val (minZ,maxZ) = (zs.head,zs.last)
-    val (minW,maxW) = (ws.head,ws.last)
+    val mins = mutable.ListBuffer[Int]()
+    val maxs = mutable.ListBuffer[Int]()
     
-    println( s"${minX},${maxX}  ${minY},${maxY}, ${minZ},${maxZ}, ${minW},${maxW}")
+    for( idx <- 0 until dims ) {
+
+      val is = cube.keys.map( t => t(idx) ).toList.sorted
+
+      val (minI, maxI) = (is.head, is.last)
+      val (bMinI, bMaxI) = (minI - 1, maxI + 1)
+      mins += bMinI
+      maxs += bMaxI
+      
+    }
     
-    val (bMinX,bMaxX) = (minX - 1, maxX + 1)
-    val (bMinY,bMaxY) = (minY - 1, maxY + 1)
-    val (bMinZ,bMaxZ) = (minZ - 1, maxZ + 1)
-    val (bMinW,bMaxW) = (minW - 1, maxW + 1)
-    
-    ((bMinX,bMinY,bMinZ,bMinW),(bMaxX,bMaxY,bMaxZ,bMaxW))
+    ( mins.toList, maxs.toList )
 
   }
   
