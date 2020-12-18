@@ -56,37 +56,70 @@ object Day18 {
   
   def evaluate( items : List[String] ) : Long = {
     
-    def innerEvaluate( is : List[String], op : Option[String], accum : Long ) : Long = {
+    def innerAdds( is : List[String] ) : List[String] = {
       
-      if( is.isEmpty ) {
-        accum
+      val idx = is.indexOf("+")
+      if( idx > 0 ) {
+        
+        // get the number before and the number after
+        val idx = is.indexOf("+")
+        val a = is(idx - 1)
+        val b = is(idx + 1)
+        
+        val sum = a.toLong + b.toLong
+        
+        // h 
+        val h = is.slice(0,idx - 1)
+        val t = is.slice(idx + 2, is.size)
+        val next = ListBuffer[String]()
+        next ++= h
+        next += sum.toString
+        next ++= t
+        innerAdds(next.toList)
+
       }
       else {
-        
-        val i = is.head
-        
-        val (nextOp,nextAccum) = if( op.isDefined ) {
-          // next thing should be a number
-          val res = op match {
-            case Some("+") => { accum + i.toLong }
-            case Some("*") => { accum * i.toLong }
-            case _ => {
-              throw IllegalStateException("unexpected token:" + i )
-            }
-          }
-          (None,res)
-        }
-        else {
-          // next thing should be an op
-          (Some(i),accum)
-        }
-        
-        innerEvaluate( is.tail, nextOp, nextAccum )
-        
+        is
       }
+      
+    }
+
+    def innerMult( is : List[String] ) : List[String] = {
+      
+      val idx = is.indexOf("*")
+      if( idx > 0 ) {
+
+        // get the number before and the number after
+        val idx = is.indexOf("*")
+        val a = is(idx - 1)
+        val b = is(idx + 1)
+
+        val sum = a.toLong * b.toLong
+
+        // h 
+        val h = is.slice(0,idx - 1)
+        val t = is.slice(idx + 2, is.size)
+        val next = ListBuffer[String]()
+        next ++= h
+        next += sum.toString
+        next ++= t
+        innerMult(next.toList)
+
+      }
+      else {
+        is
+      }
+
     }
     
-    innerEvaluate( items, Some("+"), 0L  )
+    // reduce the additions
+    val as = innerAdds(items)
+    
+    
+    // reduce the multiplications
+    val is = innerMult(as)
+    
+    is.head.toLong
     
   } 
   
