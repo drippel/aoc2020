@@ -10,26 +10,147 @@ object Day18 {
     // day12 - grid enhancements
     // day17 (and earlier) combine list of lists recursively with flatten
     Console.out.println("2020 18...")
-    val ls = toLines(input).map(clean(_))
+    val ls = toLines(simple).map(clean(_))
     ls.foreach(Console.out.println(_))
-    
+
     val ts = ls.map( tokenize(_))
-    val rs = ts.map( reduce(_))
-    val is = rs.map( evaluate(_))
+    // val rs = ts.map( reduce(_))
+    // val is = rs.map( evaluate(_))
+    // val sum = is.foldLeft(0L)( _ + _)
+    // println(sum)
     
-    val sum = is.foldLeft(0L)( _ + _)
-    println(sum)
+    // println( solver(ts.head) )
+    println( anotherOne(ts.head) )
+
+
+  }
+
+  val simple = "1 + 2 * 3 + 4 * 5 + 6"
+  val stest = "(6 * (5 + 8 * 7 * 8 + 4) * (7 + 7 * 3 * 5)) + 5 * (8 + (8 + 3 + 5 + 5) + (3 + 2 + 7 * 2 * 9) + 6 * 5 + (2 * 6)) * ((4 * 3) + 3) + 9 * (3 + 6 * 2 + 3 * 8)"
+  
+  val s2 = "1 + (2 * 3) + (4 * (5 + 6))"
+  
+  def anotherOne( ts : List[String] ) : Long = {
+
+    def doOp( is : List[String] )( symbol : String )( comb : (String,String) => String ) : List[String] = {
+      val idx = is.indexOf( symbol )
+      if( idx < 0 ) {
+        is
+      }
+      else {
+        val a = is(idx - 1)
+        val b = is(idx + 1)
+        val s = List( comb( a, b ).toString )
+        val h = is.slice(0,idx - 1)
+        val t = is.slice( idx + 2, is.size )
+        doOp( h ++ s ++ t )(symbol)(comb)
+      }
+    }
     
+    val doAdds = doOp( _ : List[String] )("+")( (a:String,b:String) => { ( a.toLong + b.toLong ).toString } )
+    
+    val doMult = doOp( _ : List[String] )( "*" )( (a:String,b:String) => { ( a.toLong * b.toLong ).toString } )
+    
+    def doOps( is : List[String] ) : List[String] = { doMult(doAdds(is)) }
+    
+    def innerAnother( ts : List[String] ) : List[String] = {
+      doOps( ts )
+    }
+    
+    val res = innerAnother( ts )
+    println(res)
+  
+    0L
+  
+  }
+
+  def solver( ts : List[String] ) : (Int,Long) = {
+    
+    def innerSolve( idx : Int, accum : Long, op : Option[String], parens : mutable.Stack[ListBuffer[String]] ) : (Int,Long) = {
+      
+      if( idx >= ts.length  ) {
+        println("done")
+        (idx,accum)
+      }
+      else {
+        
+        val h = ts(idx)
+        if( h.equals("(") ) {
+          println("start a stack")
+          parens.push(ListBuffer())
+          innerSolve( idx + 1, accum, op, parens )
+        }
+        else if( h.equals( ")")) {
+          println("end a stack")
+          // pop the list off the stack and solve it
+          val l = parens.pop()
+          println(l)
+          val res = solver(l.toList)
+          if( parens.isEmpty ) {
+            innerSolve( idx + 1, accum + res._2, op, parens )
+          }
+          else {
+            // append to the current list
+            val l = parens.head
+            l += res._2.toString
+            innerSolve( idx + 1, accum, op, parens )
+          }
+        }
+        else if( h.equals("+")) {
+          println("add")
+          if( parens.isEmpty ) {
+            innerSolve( idx + 1, accum, Some( "+" ), parens )
+          }
+          else {
+            // add to the current list
+            val l = parens.head
+            l += "+"
+            innerSolve( idx + 1, accum, op, parens )
+          }
+        }
+        else if( h.equals("*")) {
+          println("mult")
+          if( parens.isEmpty ) {
+            innerSolve( idx + 1, accum, Some( "*" ), parens )
+          }
+          else {
+            val l = parens.head
+            l += "*"
+            innerSolve( idx + 1, accum, op, parens )
+          }
+        }
+        else {
+          println(h)
+          val na = op match {
+            case Some("+") => accum + h.toLong
+            case Some("*") => accum * h.toLong
+            case _ => throw new IllegalStateException("unexpected token")
+          }
+          if( parens.isEmpty ) {
+            innerSolve( idx + 1, na, None, parens )
+          }
+          else {
+            val l = parens.head
+            l += h 
+            innerSolve( idx + 1, accum, op, parens )
+          }
+        }
+        
+      }
+      
+    }
+    
+    innerSolve( 0, 0L, Some("+"), mutable.Stack() )
     
   }
-  
-  def reduce( is : List[String] ) : List[String] = { 
-    
+
+  def reduce( is : List[String] ) : List[String] = {
+
     def innerReduce( current : List[String] ) : List[String] = {
-      
+
       val open = current.lastIndexOf("(")
       if( open != -1 ) {
-        
+
         val close = current.indexOf(")", open )
         // println( s"${open} ${close}")
         val sub = current.slice( open + 1, close )
@@ -37,7 +158,7 @@ object Day18 {
         // println(x)
         val next = ListBuffer[String]()
         next ++= current.slice(0, open )
-        next += x 
+        next += x
         next ++= current.slice( close + 1, current.size )
         // println(next)
         innerReduce( next.toList )
@@ -45,30 +166,30 @@ object Day18 {
       else {
         current
       }
-      
+
     }
-    
+
     innerReduce( is )
-    
+
   }
-  
+
   def tokenize( line : String ) : List[String] = line.split(" ").toList.map( _.trim )
-  
+
   def evaluate( items : List[String] ) : Long = {
-    
+
     def innerAdds( is : List[String] ) : List[String] = {
-      
+
       val idx = is.indexOf("+")
       if( idx > 0 ) {
-        
+
         // get the number before and the number after
         val idx = is.indexOf("+")
         val a = is(idx - 1)
         val b = is(idx + 1)
-        
+
         val sum = a.toLong + b.toLong
-        
-        // h 
+
+        // h
         val h = is.slice(0,idx - 1)
         val t = is.slice(idx + 2, is.size)
         val next = ListBuffer[String]()
@@ -81,11 +202,11 @@ object Day18 {
       else {
         is
       }
-      
+
     }
 
     def innerMult( is : List[String] ) : List[String] = {
-      
+
       val idx = is.indexOf("*")
       if( idx > 0 ) {
 
@@ -96,7 +217,7 @@ object Day18 {
 
         val sum = a.toLong * b.toLong
 
-        // h 
+        // h
         val h = is.slice(0,idx - 1)
         val t = is.slice(idx + 2, is.size)
         val next = ListBuffer[String]()
@@ -111,30 +232,29 @@ object Day18 {
       }
 
     }
-    
+
     // reduce the additions
     val as = innerAdds(items)
-    
-    
+
+
     // reduce the multiplications
     val is = innerMult(as)
-    
+
     is.head.toLong
-    
-  } 
-  
+
+  }
+
   def clean( line : String ) = {
     val a = line.replace("(", "( ")
     val b = a.replace(")", " )")
     b
   }
   
-  def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty ) 
-  
-  val simple = "1 + 2 * 3 + 4 * 5 + 6"
+  def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty )
+
 
   val simple2 = "2 * 3 + (4 * 5)"
-  
+
   val simple3 = "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"
 
   val test =
@@ -143,8 +263,9 @@ object Day18 {
       5 + (8 * 3 + 9 + 3 * 4 * 3)
       5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))
       ((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"""
-  
-  
+      
+
+
   val input =
     """(4 + (2 * 7) * 4) + (6 * 9 + 8 * 4 + 7 * 3) * 3 * 5
       5 * 9 + (5 * 9) * (6 + 2) + 3 + 7
