@@ -2,6 +2,7 @@ package com.pfs.advent
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.util.matching.Regex
 
 object Day19 {
 
@@ -10,35 +11,118 @@ object Day19 {
     // day12 - grid enhancements
     // day17 (and earlier) combine list of lists recursively with flatten
     Console.out.println("2020 19...")
-    val ls = toLines(test)
-    // ls.foreach(Console.out.println(_))
-    
+    val ls = toLines(i2)
+
     parse(ls)
-    
+
+    println(ruleMap)
+
+    val head = ruleMap(0)
+    walk(head)
+    println("")
+
+    val expr = ListBuffer[Char]()
+    compile(head, expr )
+    val out = expr.mkString
+    println(out)
+
+    val r = new Regex(out)
+    val ms = messages.map( r.matches(_) )
+    val ts = ms.count( _ == true )
+    println(ts)
   }
 
+  def walk( rule : Rule ) : Unit = {
 
-  def mmatch( mr : MultiRule, message : String, idx : Int ) : Boolean = {
-    val l = smatch( mr.left, message, idx )
-    val r = smatch( mr.right, message, idx )
+    rule match {
+      case CharRule( i, c ) => { print(c) }
+      case AndRule(id, subs) => {
+        val rs = subs.map( getRule(_))
+        rs.foreach( r => walk( r ))
+      }
+      case OrRule( id, l, r ) => {
+        print("(")
+        val ls = l.map( getRule(_))
+        ls.foreach( r => walk( r ))
+        print("|")
+        val rs = r.map( getRule(_))
+        rs.foreach( r => walk( r ))
+        print(")")
+      }
+      case OneOrMoreRule( id, l ) => {
+        print("(")
+        walk( getRule( l(0) ) )
+        print(")+")
+      }
+      case PairsRule(id, subs) => {
+        print("(")
+        walk( getRule( subs(0) ) )
+        print(")")
+        print("(")
+        walk( getRule( subs(1) ) )
+        print(")")
+        
+      }
+    }
   }
-  
-  def smatch( rs : List[String], message : String, idx : Int ) : Boolean = {
-    
-    
-    
-  } 
-  
-  def pmatch( cr : CharRule, message : String, idx : Int ) : Boolean = { 
-    message(idx) == cr.c 
-  }
-  
 
-  
+  def compile( rule : Rule, accum : ListBuffer[Char] ) : Unit = {
+
+    rule match {
+      case CharRule( i, c ) => { accum += c }
+      case AndRule(id, subs) => {
+        val rs = subs.map( getRule(_))
+        rs.foreach( r => compile( r, accum ))
+      }
+      case OrRule( id, l, r ) => {
+        accum += '('
+        val ls = l.map( getRule(_))
+        ls.foreach( r => compile( r, accum ))
+        accum += '|'
+        val rs = r.map( getRule(_))
+        rs.foreach( r => compile( r, accum ))
+        accum += ')'
+      }
+      case OneOrMoreRule( id, l ) => {
+        accum += '('
+        compile( getRule( l(0) ), accum )
+        accum += ')'
+        accum += '+'
+      }
+      case PairsRule(id, subs) => {
+        //  ^(?'open'o)+(?'-open'c)+$
+        /*
+        accum ++= "("
+        compile( getRule( subs(0) ), accum )
+        accum ++= ")"
+        accum ++= "(?R)?"
+        accum ++= "("
+        compile( getRule( subs(1) ), accum )
+        accum ++= ")"
+         */
+        
+        // part2 = '((?:' + rule[42] + ')+)((?:' + rule[31] + ')+)'
+        accum ++= "("
+        compile( getRule( subs(0) ), accum )
+        accum ++= ")"
+        accum ++= "(?R)?"
+        accum ++= "("
+        compile( getRule( subs(1) ), accum )
+        accum ++= ")"
+      }
+    }
+  }
+
+  def getRule( id : Int ) = { ruleMap(id) }
+
   abstract class Rule()
-  case class CharRule( id : String, c : Char ) extends Rule()
-  case class MultiRule( id : String, left : List[String], right : List[String] ) extends Rule()
-  val ruleMap = mutable.HashMap[String,Rule]()
+  case class CharRule( id : Int, c    : Char ) extends Rule()
+  case class AndRule(  id : Int, subs : List[Int] ) extends Rule()
+  case class OrRule(   id : Int, left : List[Int], right : List[Int]  ) extends Rule()
+  case class OneOrMoreRule(  id : Int, subs : List[Int] ) extends Rule()
+  case class PairsRule(  id : Int, subs : List[Int] ) extends Rule()
+
+  val ruleMap = mutable.HashMap[Int,Rule]()
   val messages = ListBuffer[String]()
   
   def parse( ls : List[String] ) = {
@@ -60,26 +144,38 @@ object Day19 {
     }
     
     def parseRule( line : String ) = {
+
+      println(line)
       
       if( line.contains("\"")) {
         val ps = line.split(":").toList.map(_.trim)
-        ruleMap += ( ps(0) -> CharRule( ps(0), ps(1).replace("\"", "" )(0) ) )
+        ruleMap += ( ps(0).toInt -> CharRule( ps(0).toInt, ps(1).replace("\"", "" )(0) ) )
       }
       else {
         val ps = line.split(":").toList.map(_.trim)
         
-        val (left,right) =  if( ps(1).contains("|")) {
-          
-          val subs = ps( 1 ).split( '|' )
-          val l = subs(0).split(' ')
-          val r = subs(1).split(' ')
-          (l.toList,r.toList)
+        if( ps(1).contains("|")) {
+          val subs = ps( 1 ).split( '|' ).toList.map( _.trim )
+          val l = subs(0).split(' ').toList.map( _.trim ).map( _.toInt )
+          val r = subs(1).split(' ').toList.map( _.trim ).map( _.toInt )
+          ruleMap += ( ps(0).toInt -> OrRule( ps(0).toInt, l, r ) )
+        }
+        else if( ps(1).contains( "+" ) ) {
+          println("plus")
+          val subs = ps(1).split( ' ' ).toList.map( _.trim )
+          val plus = List( subs(0).toInt ) 
+          ruleMap += ( ps(0).toInt -> OneOrMoreRule( ps(0).toInt, plus ) )
+        }
+        else if( ps(1).contains( "?" ) ) {
+          println("pairs")
+          val subs = ps(1).split( ' ' ).toList.map( _.trim )
+          val pair = List( subs(0).toInt, subs(1).toInt )
+          ruleMap += ( ps(0).toInt -> PairsRule( ps(0).toInt, pair ) )
         }
         else {
-          val subs = ps( 1 ).split( ' ' ).toList.map( _.trim )
-          (subs,List())
+          val subs = ps( 1 ).split( ' ' ).toList.map( _.trim ).map( _.toInt )
+          ruleMap += ( ps(0).toInt -> AndRule( ps(0).toInt, subs ) )
         }
-        ruleMap += ( ps(0) -> MultiRule( ps(0), left, right ))
       }
       
     }
@@ -104,9 +200,21 @@ object Day19 {
       abbbab
       aaabbb
       aaaabbb""".stripMargin
+  // was    
+  // 8: 42
+  // 11: 42 31
+  // 200: "+"
+  //  ^(?'open'o)+(?'-open'c)+$
+  //  (?'open'o)+(?'-open'c)+
+  // part2 = '((?:' + rule[42] + ')+)((?:' + rule[31] + ')+)'
   
   val input =
-    """94: 118 64 | 22 34
+    """8: 42 +
+      11: 42 31 ?
+      42: 6 64 | 68 34
+      31: 75 34 | 108 64
+      0: 8 11
+      94: 118 64 | 22 34
       21: 16 64 | 49 34
       70: 58 34 | 106 64
       100: 58 64 | 56 34
@@ -118,7 +226,6 @@ object Day19 {
       131: 56 64 | 9 34
       34: "b"
       65: 64 58 | 34 107
-      0: 8 11
       68: 64 43 | 34 50
       48: 107 64 | 96 34
       38: 80 64 | 74 34
@@ -133,12 +240,10 @@ object Day19 {
       118: 9 34 | 114 64
       4: 107 34 | 106 64
       102: 96 64 | 107 34
-      31: 75 34 | 108 64
       99: 34 10 | 64 114
       90: 64 34 | 34 34
       112: 64 10 | 34 3
       15: 114 64 | 88 34
-      11: 42 31
       49: 32 34 | 120 64
       83: 56 64 | 96 34
       29: 34 78 | 64 131
@@ -160,10 +265,8 @@ object Day19 {
       56: 64 34
       110: 105 64 | 54 34
       79: 64 9 | 34 107
-      42: 6 64 | 68 34
       53: 2 64 | 17 34
       61: 64 114 | 34 88
-      8: 42
       19: 103 34 | 40 64
       9: 30 34 | 34 64
       107: 34 64 | 64 30
@@ -640,5 +743,55 @@ object Day19 {
       abaaaaabaaaabbbbababaaaa
       bbbaaaababbbaaababbbbaaa
       abaabaaaaabbabaaababaaaaaabababa"""
+
+  //  8: 42
+  val i2 =
+    """42: 9 14 | 10 1
+      8: 42 +
+      11: 42 31 ?
+      9: 14 27 | 1 26
+      10: 23 14 | 28 1
+      1: "a"
+      5: 1 14 | 15 1
+      19: 14 1 | 14 14
+      12: 24 14 | 19 1
+      16: 15 1 | 14 14
+      31: 14 17 | 1 13
+      6: 14 14 | 1 14
+      2: 1 24 | 14 4
+      0: 8 11
+      13: 14 3 | 1 12
+      15: 1 | 14
+      17: 14 2 | 1 7
+      23: 25 1 | 22 14
+      28: 16 1
+      4: 1 1
+      20: 14 14 | 1 15
+      3: 5 14 | 16 1
+      27: 1 6 | 14 18
+      14: "b"
+      21: 14 1 | 1 14
+      25: 1 1 | 1 14
+      22: 14 14
+      26: 14 22 | 1 20
+      18: 15 15
+      7: 14 5 | 1 21
+      24: 14 1
+      
+      abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
+      bbabbbbaabaabba
+      babbbbaabbbbbabbbbbbaabaaabaaa
+      aaabbbbbbaaaabaababaabababbabaaabbababababaaa
+      bbbbbbbaaaabbbbaaabbabaaa
+      bbbababbbbaaaaaaaabbababaaababaabab
+      ababaaaaaabaaab
+      ababaaaaabbbaba
+      baabbaaaabbaaaababbaababb
+      abbbbabbbbaaaababbbbbbaaaababb
+      aaaaabbaabaaaaababaa
+      aaaabbaaaabbaaa
+      aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
+      babaaabbbaaabaababbaabababaaab
+      aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"""
 
 }
