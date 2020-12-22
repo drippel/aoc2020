@@ -11,25 +11,26 @@ object Day19 {
     // day12 - grid enhancements
     // day17 (and earlier) combine list of lists recursively with flatten
     Console.out.println("2020 19...")
-    val ls = toLines(i2)
+    val ls = toLines(input)
 
     parse(ls)
 
     println(ruleMap)
 
     val head = ruleMap(0)
+    println("walking...")
     walk(head)
     println("")
+    println("done...")
 
-    val expr = ListBuffer[Char]()
-    compile(head, expr )
-    val out = expr.mkString
-    println(out)
+    val regex = compile(head )
+    println(regex)
 
-    val r = new Regex(out)
-    val ms = messages.map( r.matches(_) )
-    val ts = ms.count( _ == true )
-    println(ts)
+    val r = new Regex(regex)
+    val ms = messages.map( s => ( s, r.matches(s) )  )
+    ms.foreach( println(_))
+    println( ms.count( _._2 == true ))
+    println( ms.size )
   }
 
   def walk( rule : Rule ) : Unit = {
@@ -41,53 +42,52 @@ object Day19 {
         rs.foreach( r => walk( r ))
       }
       case OrRule( id, l, r ) => {
-        print("(")
+        // print("(")
         val ls = l.map( getRule(_))
         ls.foreach( r => walk( r ))
-        print("|")
+        // print("|")
         val rs = r.map( getRule(_))
         rs.foreach( r => walk( r ))
-        print(")")
+        // print(")")
       }
       case OneOrMoreRule( id, l ) => {
-        print("(")
+        // print("((")
         walk( getRule( l(0) ) )
-        print(")+")
+        // print(")+)")
       }
       case PairsRule(id, subs) => {
-        print("(")
+        // print("((")
         walk( getRule( subs(0) ) )
-        print(")")
-        print("(")
+        // print(")+)")
+        // print("((")
         walk( getRule( subs(1) ) )
-        print(")")
+        // print(")+)")
         
       }
     }
   }
-
-  def compile( rule : Rule, accum : ListBuffer[Char] ) : Unit = {
+  
+  def compileOld( rule : Rule, accum : ListBuffer[Char] ) : Unit = {
 
     rule match {
       case CharRule( i, c ) => { accum += c }
       case AndRule(id, subs) => {
         val rs = subs.map( getRule(_))
-        rs.foreach( r => compile( r, accum ))
+        rs.foreach( r => compileOld( r, accum ))
       }
       case OrRule( id, l, r ) => {
         accum += '('
         val ls = l.map( getRule(_))
-        ls.foreach( r => compile( r, accum ))
+        ls.foreach( r => compileOld( r, accum ))
         accum += '|'
         val rs = r.map( getRule(_))
-        rs.foreach( r => compile( r, accum ))
+        rs.foreach( r => compileOld( r, accum ))
         accum += ')'
       }
       case OneOrMoreRule( id, l ) => {
-        accum += '('
-        compile( getRule( l(0) ), accum )
-        accum += ')'
-        accum += '+'
+        accum ++= "("
+        compileOld( getRule( l(0) ), accum )
+        accum ++= ")+"
       }
       case PairsRule(id, subs) => {
         //  ^(?'open'o)+(?'-open'c)+$
@@ -100,15 +100,48 @@ object Day19 {
         compile( getRule( subs(1) ), accum )
         accum ++= ")"
          */
-        
+
         // part2 = '((?:' + rule[42] + ')+)((?:' + rule[31] + ')+)'
-        accum ++= "("
-        compile( getRule( subs(0) ), accum )
-        accum ++= ")"
-        accum ++= "(?R)?"
-        accum ++= "("
-        compile( getRule( subs(1) ), accum )
-        accum ++= ")"
+        accum ++= "(?rule11("
+        compileOld( getRule( subs(0) ), accum )
+        // accum ++= ")+)"
+        accum ++= ")(?P>rule11)("
+        // accum ++= "((?:"
+        compileOld( getRule( subs(1) ), accum )
+        // accum ++= ")+)"
+        accum ++= "))"
+      }
+    }
+  }
+
+  def compile( rule : Rule ) : String = {
+
+    rule match {
+      case CharRule( i, c ) => { c.toString }
+      case AndRule(id, subs) => {
+        val rs = subs.map( getRule(_))
+        val ss = rs.map( r => compile( r ))
+        "(?:" + ss.mkString +")"
+      }
+      case OrRule( id, l, r ) => {
+        var out = "(?:"
+        val lhs = l.map( getRule(_))
+        val lho = lhs.map( r => compile( r ))
+        out = out + lho.mkString + "|"
+        val rhs = r.map( getRule(_))
+        val rho = rhs.map( r => compile( r ))
+        out = out + rho.mkString + ")"
+        out
+      }
+      case OneOrMoreRule( id, l ) => {
+        "(?:" + compile( getRule( l(0) ) ) + "+)"
+      }
+      case PairsRule(id, subs) => {
+        // uses pcre regexes
+        //  ^(?'open'o)+(?'-open'c)+$
+        val lhs = compile( getRule( subs(0) ) )
+        val rhs = compile( getRule( subs(1) ) )
+        "(?:(" + lhs +"" + rhs + "|" + lhs +"(?-1)" + rhs +"))"
       }
     }
   }
@@ -207,13 +240,19 @@ object Day19 {
   //  ^(?'open'o)+(?'-open'c)+$
   //  (?'open'o)+(?'-open'c)+
   // part2 = '((?:' + rule[42] + ')+)((?:' + rule[31] + ')+)'
-  
+
+    // 11: 42 11 31
+    // 11: 42 31 ?
+    // 11: 31 +
+    // 0: 8 11
+    // 8: 42 +
+    // 11: 42 31 ?
   val input =
-    """8: 42 +
+    """0: 8 11
+       8: 42 + 
       11: 42 31 ?
       42: 6 64 | 68 34
       31: 75 34 | 108 64
-      0: 8 11
       94: 118 64 | 22 34
       21: 16 64 | 49 34
       70: 58 34 | 106 64
