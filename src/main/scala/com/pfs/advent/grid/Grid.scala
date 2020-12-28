@@ -82,6 +82,58 @@ class Grid( val rows : Int, val cols : Int, val init : Char = '.' ) {
     innerFirstInDir( rs + dir.row, cs + dir.col, None )
 
   }
+  
+  def row( i : Int ) = {
+    val cs = for{
+      c <- 0 until cols
+    } yield this(i,c)
+    
+    cs.toList
+  }
+  
+  def toRows() : List[List[Char]] = {
+    val rs = for{
+      r <- 0 until rows
+    } yield row(r)
+    
+    rs.toList
+  }
+  
+  def toCols() : List[List[Char]] = {
+    val rs = for{
+      r <- 0 until cols
+    } yield col(r)
+
+    rs.toList
+  }
+
+  def col( i : Int ) = {
+    val rs = for{
+      r <- 0 until rows
+    } yield this(r,i)
+
+    rs.toList
+  }
+
+  override def hashCode( ) : Int = {
+    val rs = toRows().map( _.mkString ).mkString
+    rs.hashCode
+  }
+
+  override def equals( obj : Any ) : Boolean = {
+    
+    if( obj.isInstanceOf[Grid]) {
+      
+      val rs = toRows().map( _.mkString ).mkString 
+      val other = obj.asInstanceOf[Grid]
+      val theirs = other.toRows().map( _.mkString ).mkString
+      rs.equals(theirs)
+    }
+    else {
+      false
+    }
+  } 
+  
 }
 
 

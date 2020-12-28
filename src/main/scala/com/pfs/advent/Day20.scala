@@ -1,6 +1,9 @@
 package com.pfs.advent
 
+import com.pfs.advent.grid.Grid
+
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object Day20 {
 
@@ -12,9 +15,229 @@ object Day20 {
     Console.out.println("2020 20...")
     val ls = toLines(input)
     
-    val ts = ls.filter( s => s.contains("Tile"))
-    println(ts.size)
+    val ts = parse(ls)
     
+    ts.foreach( t => { 
+      // println( t.id ) 
+      // Grid.print(t.data)
+    } )
+    
+    // val as = arrangements(ts.head.data)
+    // as.foreach(Grid.print(_))
+    
+    solve(ts)
+    
+  }
+  
+  def arrangements( src : Grid ) : Set[Grid] = {
+
+    // solve(ts)
+    val all = ListBuffer[Grid]()
+
+    all += src
+
+    all ++= rcw(src)
+    all ++= rccw(src)
+
+    val fx = flipX(src)
+    all += fx
+
+    val fy = flipY(src)
+    all += fy
+
+    val dp = diagP(src)
+    all += dp
+
+    val dn = diagN(src)
+    all += dn
+
+    all.toSet
+  }
+
+  def rcw( o : Grid ) : List[Grid] = { List( o, cw(o), cw(cw(o)), cw(cw(cw(o)))) }
+  def rccw( o : Grid ) : List[Grid] = { List( o, ccw(o), ccw(ccw(o)), ccw(ccw(ccw(o)))) }
+
+  def solve( ts : List[Tile] ) : Unit = {
+    
+    // find the four corners
+
+    // calc the n x n size
+    val side = math.sqrt( ts.size ).toInt
+    
+    val loc = ts.map( t => { ( matchCount( t, ts ), t ) } )
+    
+    val corners = loc.filter( _._1 == 2 )
+    val sides = loc.filter( _._1 == 3 )
+    val middle = loc.filter( _._1 == 4 )
+    
+    val cids = corners.map( _._2.id ).map( _.toLong )
+    val prod = cids.foldLeft(1L)( _ * _ )
+    println(prod)
+    
+  }
+  
+  def matchCount( target : Tile, allTiles : List[Tile] ) : Int = {
+    
+    // get the top
+    val top = target.data.row(0)
+    val bottom = target.data.row(target.data.rows - 1)
+    val left = target.data.col(0)
+    val right = target.data.col(target.data.cols - 1)
+    
+    //
+    val others = allTiles.filter( t => { !t.id.equals(target.id) } )
+    
+    val allEdges = others.map( edges( _ ) ).flatten
+    
+    val t = allEdges.count( e => lineup( e, top ))
+    val b = allEdges.count( e => lineup( e, bottom ))
+    val l = allEdges.count( e => lineup( e, left ))
+    val r = allEdges.count( e => lineup( e, right ))
+    
+    t + b + l + r
+    
+  }
+  
+  def lineup( a : List[Char], b : List[Char] ) : Boolean =  { a.equals(b) || a.equals(b.reverse) }
+    
+  
+  def edges( t : Tile ) = {
+    // top, bottom, left, right
+    List( t.data.row(0), t.data.row(t.data.rows - 1), t.data.col(0), t.data.col(t.data.cols - 1))
+  }
+
+  def diagN( src : Grid ) = {
+
+    val g = Grid(src.rows, src.cols)
+
+    val cs = src.toCols()
+
+    for( r <- 0 until src.rows  ) {
+      val col = cs(r)
+      for( c <- 0 until src.cols ) {
+        g(r,c,col(c))
+      }
+    }
+
+
+    g
+  }
+  
+  // TODO: move these to Grid class
+  
+  def ccw( src : Grid ) = {
+
+    val g = Grid(src.rows, src.cols)
+
+    val cs = src.toCols().reverse
+
+    for( r <- 0 until src.rows  ) {
+      val col = cs(r)
+      for( c <- 0 until src.cols ) {
+        g(r,c,col(c))
+      }
+    }
+
+
+    g
+  }
+
+  def cw( src : Grid ) = {
+    
+    val g = Grid(src.rows, src.cols)
+    
+    val rs = src.toRows().reverse
+    
+    for( c <- 0 until src.cols  ) {
+      val row = rs(c)
+      for( r <- 0 until src.rows ) {
+        g(r,c,row(r))
+      }
+    }
+    
+    
+    g
+  }
+  
+  def diagP( src : Grid ) = {
+
+    val g = Grid(src.rows, src.cols)
+
+    val rs = src.toRows().reverse
+
+    for( c <- 0 until src.cols  ) {
+      val row = rs(c).reverse
+      for( r <- 0 until src.rows ) {
+        g(r,c,row(r))
+      }
+    }
+
+
+    g
+  }
+
+  def flipX( src : Grid ) = {
+    
+    val g = Grid(src.rows, src.cols)
+    
+    val rx = src.rows
+    val cx = src.cols
+    
+    val xr = (0 until rx).toList.reverse
+    val ridx = xr.zipWithIndex
+    
+    for( c <- 0 until cx ) {
+      for( r <- ridx ) {
+        g(r._1,c,src( r._2,c) )
+      }
+    }
+    
+    g
+  }
+  
+  def flipY( src : Grid ) = {
+
+    val g = Grid(src.rows, src.cols)
+
+    val rx = src.rows
+    val cx = src.cols
+
+    val xc = (0 until cx).toList.reverse
+    val cidx = xc.zipWithIndex
+
+    for( r <- 0 until rx ) {
+      for( c <- cidx ) {
+        g(r,c._1,src( r,c._2) )
+      }
+    }
+
+    g
+  }
+  
+  def startGrid() : Grid = {
+    val g = Grid(4,4)
+    
+    g(0,0,'A')
+    g(0,1,'B')
+    g(0,2,'C')
+    g(0,3,'D')
+
+    g(1,0,'E')
+    g(1,1,'F')
+    g(1,2,'G')
+    g(1,3,'H')
+
+    g(2,0,'I')
+    g(2,1,'J')
+    g(2,2,'K')
+    g(2,3,'L')
+
+    g(3,0,'M')
+    g(3,1,'N')
+    g(3,2,'O')
+    g(3,3,'P')
+    
+    g
   }
   
   // everything is row,col
@@ -54,38 +277,19 @@ object Day20 {
     }
   }
   
-  def solve( ts : List[Tile] ) = {
-    
-    // calc the n x n size
-    val side = math.sqrt( ts.size ).toInt
-    
-    
-    // solution type
-    val solution = mutable.HashMap[(Int,Int),Tile]()
-    
-    // 
-    
-    // start with any tile
-    
-    // find possible matches to each side
-    
-    // attach them 
-    
-    // continue on - recurse
-    
-    // 
-  }
   
   def parse( raw : List[String] ) = {
-    
+    val gs = raw.grouped(11).toList
+    gs.map(parseTile(_))
   }
   
-  def flipX( src : Tile ) : Tile = { src }
-  def flipY( src : Tile ) : Tile = { src }
-  def rotateCW( src : Tile ) : Tile = { src }
-  def rotateCCW( src : Tile ) : Tile = { src }
+  def parseTile( lines : List[String] ) : Tile = {
+    val ps = lines(0).split(' ')
+    val t = lines.tail.mkString("\n")
+    Tile( ps(1).replace(":", "" ), Grid.parse(t) )
+  }
   
-  case class Tile( id : String, data : Array[Array[Char]] )
+  case class Tile( id : String, data : Grid )
   
   def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty ) 
   
