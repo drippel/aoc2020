@@ -10,19 +10,19 @@ object Day22 {
     // day12 - grid enhancements
     // day17 (and earlier) combine list of lists recursively with flatten
     Console.out.println("2020 22...")
-    val ls = toLines(test)
-    
+    val ls = toLines(input)
+
     val ps = parse(ls)
     ps.foreach(println(_))
-    
-    val w = play( ps(0), ps(1))
+
+    val w = game( 1, 1, ps(0), ps(1))
     println(w)
     println( calcScore(w) )
-    
+
   }
-  
+
   def calcScore( winner : Player ) : Long = {
-    
+
     // calc the score
     val size = winner.deck.size
 
@@ -34,70 +34,103 @@ object Day22 {
 
     sum
   }
-  
-  val roundCache = mutable.HashSet[(mutable.Queue[Int],mutable.Queue[Int])]() 
 
-  def play( p1 : Player, p2 : Player ) : Player = {
+  val roundCache = mutable.HashSet[(mutable.Queue[Int],mutable.Queue[Int])]()
+
+  def game( gid : Int, rid : Int,  p1 : Player, p2 : Player ) : Player = {
     
-    // while both players have cards
-    while( p1.deck.size > 0 && p2.deck.size > 0 ) {
-      
-      val p1c = p1.deck.dequeue() 
-      val p2c = p2.deck.dequeue()
-      
-      if( p1c > p2c ) {
-        p1.deck += p1c
-        p1.deck += p2c
-      }
-      else {
-        p2.deck += p2c
-        p2.deck += p1c
-      }
-      
-    }
+    println( s"Game: ${gid} Round: ${rid}")
     
     if( p1.deck.size == 0 ) {
-      p2
+        p2
     }
-    else {
+    else if( p2.deck.size == 0 ) {
+        p1
+    }
+    else if( roundCache.contains( (p1.deck, p2.deck ) ) ) {
+      println("***********************dupe check**************************************")
       p1
     }
-    
-  }
-  
-  def parse( lines : List[String] ) : List[Player] = {
-    
-    def innerParse( ls : List[String], accum : List[Player] ) : List[Player] = {
-      if( ls.isEmpty ) {
-        accum 
-      }
-      else {
+    else {
+      
+      // add this state to the round check
+      val cs =( p1.deck, p2.deck )
+      roundCache += cs 
+
+      val p1c = p1.deck.dequeue()
+      val p2c = p2.deck.dequeue()
+      
+      // sub game check
+      if( p1c <= p1.deck.size && p2c <= p2.deck.size ) {
         
-        val line = ls.head 
-        val nextAccum = if( line.contains("Player")) {
-          
-          // start a new player
-          val p = Player( line, mutable.Queue[Int]() )
-          accum :+ p 
-          
+        println("sub game")
+        // println( s"${p1c} ${p2c}")
+        // println( s"${p1.deck}")
+        // println( s"${p2.deck}")
+        
+        // make a new p1 and p2 for the sub game
+        val p1s = Player( p1.name, p1.deck.slice(0, p1c))
+        val p2s = Player( p2.name, p2.deck.slice(0, p2c))
+        val wp = game( gid + 1, 0, p1s, p2s )
+        if( wp.name.equalsIgnoreCase(p1.name) ) {
+          p1.deck += p1c
+          p1.deck += p2c
         }
         else {
-          
-          // the current line belongs to the last player 
+          p2.deck += p2c
+          p2.deck += p1c
+        }
+      }
+      else {
+
+        if( p1c > p2c ) {
+          p1.deck += p1c
+          p1.deck += p2c
+        }
+        else {
+          p2.deck += p2c
+          p2.deck += p1c
+        }
+      }
+      
+      game( gid, rid + 1, p1, p2 )
+    }
+
+  }
+
+  def parse( lines : List[String] ) : List[Player] = {
+
+    def innerParse( ls : List[String], accum : List[Player] ) : List[Player] = {
+      if( ls.isEmpty ) {
+        accum
+      }
+      else {
+
+        val line = ls.head
+        val nextAccum = if( line.contains("Player")) {
+
+          // start a new player
+          val p = Player( line, mutable.Queue[Int]() )
+          accum :+ p
+
+        }
+        else {
+
+          // the current line belongs to the last player
           val p = accum.last
           p.deck += line.trim.toInt
-          
+
           accum
         }
-        
+
         innerParse(ls.tail, nextAccum )
       }
     }
-    
+
     innerParse( lines, List() )
-    
+
   }
-  
+
   case class Player( name : String, deck : mutable.Queue[Int] )
   
   def toLines(src : String ) = src.split("\n").toList.map(_.trim).filter( s => !s.isEmpty ) 
