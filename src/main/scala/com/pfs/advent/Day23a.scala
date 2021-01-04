@@ -219,7 +219,7 @@ object Day23a {
 
   def makeNexts( src : String ) = {
 
-    val nmap = Array.ofDim[Int](1000000)
+    val nmap = Array.ofDim[Int](1000001)
 
     val ps = src.split(",").map( _.toInt )
 
