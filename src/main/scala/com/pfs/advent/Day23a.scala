@@ -1,5 +1,7 @@
 package com.pfs.advent
 
+import com.pfs.advent.utils.AOC
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -23,7 +25,10 @@ object Day23a {
     println(np(10))
     println(np(1000000))
     println(np.size)
-    solve(np)
+    
+    AOC.timeIt( () => {
+      solve( np )
+    })
     
   }
   
